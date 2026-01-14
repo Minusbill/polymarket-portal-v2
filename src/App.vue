@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen">
-    <div class="min-h-screen bg-brand-50 text-brand-900 dark:bg-slate-950 dark:text-slate-100">
-      <header class="border-b border-brand-100 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <div :class="['min-h-screen', darkMode ? 'theme-dark' : '']">
+    <div class="min-h-screen bg-brand-50 text-brand-900">
+      <header class="border-b border-brand-100 bg-white">
         <div class="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between md:px-10">
           <div>
-            <p class="text-xs uppercase tracking-[0.28em] text-brand-500 dark:text-slate-400">Polymarket Portal</p>
+            <p class="text-xs uppercase tracking-[0.28em] text-brand-500">Polymarket Portal</p>
             <h1 class="font-display text-2xl md:text-3xl">多账户对刷交互门户</h1>
-            <p class="text-sm text-brand-600 dark:text-slate-300">钱包对为最小单位，操作完全由用户手动确认。</p>
+            <p class="text-sm text-brand-600">钱包对为最小单位，操作完全由用户手动确认。</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <button
@@ -15,48 +15,54 @@
             >
               操作说明
             </button>
+            <button
+              class="rounded-full border border-brand-200 px-4 py-2 text-sm text-brand-700 hover:border-brand-300"
+              @click="darkMode = !darkMode"
+            >
+              {{ darkMode ? "日间模式" : "夜间模式" }}
+            </button>
           </div>
         </div>
       </header>
 
       <main class="mx-auto w-full max-w-[1280px] px-3 pb-8 pt-3 md:px-4">
         <div class="grid gap-3 lg:grid-cols-[180px_1fr]">
-          <aside class="h-fit rounded-2xl border border-brand-100 bg-white p-2 shadow-card dark:border-slate-800 dark:bg-slate-900">
-            <div class="text-xs text-brand-600 dark:text-slate-200">模块导航</div>
+          <aside class="h-fit rounded-2xl border border-brand-100 bg-white p-2 shadow-card">
+            <div class="text-xs text-brand-600">模块导航</div>
             <div class="mt-3 space-y-2">
-              <button
-                class="w-full rounded-xl border px-3 py-2 text-left text-sm dark:border-slate-700 dark:text-slate-200"
-                :class="currentPage === 'wallets' ? 'border-brand-300 bg-brand-50 text-brand-800 dark:border-slate-500 dark:bg-slate-800 dark:text-white' : 'border-brand-100'"
-                @click="currentPage = 'wallets'"
-              >
+                <button
+                  class="w-full rounded-xl border px-3 py-2 text-left text-sm"
+                  :class="currentPage === 'wallets' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
+                  @click="currentPage = 'wallets'"
+                >
                 钱包管理
               </button>
-              <button
-                class="w-full rounded-xl border px-3 py-2 text-left text-sm dark:border-slate-700 dark:text-slate-200"
-                :class="currentPage === 'hedge' ? 'border-brand-300 bg-brand-50 text-brand-800 dark:border-slate-500 dark:bg-slate-800 dark:text-white' : 'border-brand-100'"
-                @click="currentPage = 'hedge'"
-              >
+                <button
+                  class="w-full rounded-xl border px-3 py-2 text-left text-sm"
+                  :class="currentPage === 'hedge' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
+                  @click="currentPage = 'hedge'"
+                >
                 对刷工作台
               </button>
-              <button
-                class="w-full rounded-xl border px-3 py-2 text-left text-sm dark:border-slate-700 dark:text-slate-200"
-                :class="currentPage === 'positions' ? 'border-brand-300 bg-brand-50 text-brand-800 dark:border-slate-500 dark:bg-slate-800 dark:text-white' : 'border-brand-100'"
-                @click="currentPage = 'positions'"
-              >
+                <button
+                  class="w-full rounded-xl border px-3 py-2 text-left text-sm"
+                  :class="currentPage === 'positions' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
+                  @click="currentPage = 'positions'"
+                >
                 仓位管理
               </button>
-              <button
-                class="w-full rounded-xl border px-3 py-2 text-left text-sm dark:border-slate-700 dark:text-slate-200"
-                :class="currentPage === 'deposit' ? 'border-brand-300 bg-brand-50 text-brand-800 dark:border-slate-500 dark:bg-slate-800 dark:text-white' : 'border-brand-100'"
-                @click="currentPage = 'deposit'"
-              >
+                <button
+                  class="w-full rounded-xl border px-3 py-2 text-left text-sm"
+                  :class="currentPage === 'deposit' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
+                  @click="currentPage = 'deposit'"
+                >
                 充值
               </button>
-              <button
-                class="w-full rounded-xl border px-3 py-2 text-left text-sm dark:border-slate-700 dark:text-slate-200"
-                :class="currentPage === 'withdraw' ? 'border-brand-300 bg-brand-50 text-brand-800 dark:border-slate-500 dark:bg-slate-800 dark:text-white' : 'border-brand-100'"
-                @click="currentPage = 'withdraw'"
-              >
+                <button
+                  class="w-full rounded-xl border px-3 py-2 text-left text-sm"
+                  :class="currentPage === 'withdraw' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
+                  @click="currentPage = 'withdraw'"
+                >
                 提现
               </button>
             </div>
@@ -65,41 +71,41 @@
           <section class="space-y-4">
             <section
               v-show="currentPage === 'wallets'"
-              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900"
+              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 class="font-display text-lg">钱包管理</h2>
-                  <p class="text-xs text-brand-500 dark:text-slate-400">支持 100+ 钱包滚动与分页展示。</p>
+                  <p class="text-xs text-brand-500">支持 100+ 钱包滚动与分页展示。</p>
                 </div>
               <div class="flex flex-wrap gap-2">
                 <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showImport = true">导入钱包</button>
                 <button
-                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="exportKeys"
                 >
                   导出私钥
                 </button>
                 <button
-                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="showPairs = true"
                 >
                   钱包对管理
                 </button>
-                <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700 dark:border-slate-700 dark:text-slate-200">
+                <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700">
                   <input type="checkbox" v-model="useProxy" />
                   使用 IP 代理
                 </label>
                 <button
-                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="showProxy = true"
                 >
                   IP 配置
                 </button>
-                <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="seedWallets(100)">
+                <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="seedWallets(100)">
                   加载 100 个
                 </button>
-                <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="clearWallets">
+                <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="clearWallets">
                   清空
                 </button>
               </div>
@@ -110,25 +116,25 @@
                 <input
                   v-model="walletSearch"
                   placeholder="搜索昵称或地址"
-                  class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
                 />
-                <select v-model.number="walletPageSize" class="rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                <select v-model.number="walletPageSize" class="rounded-lg border border-brand-200 px-3 py-2 text-sm">
                   <option :value="20">20 / 页</option>
                   <option :value="50">50 / 页</option>
                   <option :value="100">100 / 页</option>
                 </select>
                 <button
-                  class="rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                  class="rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700"
                   @click="refreshBalances"
                 >
                   查询余额
                 </button>
-                <div class="text-xs text-brand-500 dark:text-slate-400">共 {{ filteredWallets.length }} 个</div>
+                <div class="text-xs text-brand-500">共 {{ filteredWallets.length }} 个</div>
               </div>
 
-              <div class="max-h-[720px] overflow-auto rounded-xl border border-brand-100 dark:border-slate-800">
+              <div class="max-h-[720px] overflow-auto rounded-xl border border-brand-100">
                 <table class="min-w-full text-sm">
-                  <thead class="sticky top-0 bg-brand-50 text-xs text-brand-500 dark:bg-slate-800 dark:text-slate-400">
+                  <thead class="sticky top-0 bg-brand-50 text-xs text-brand-500">
                     <tr>
                       <th class="px-3 py-2 text-left">选择</th>
                       <th class="px-3 py-2 text-left">#</th>
@@ -139,16 +145,16 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(w, idx) in visibleWallets" :key="w.id" class="border-t border-brand-100 dark:border-slate-800">
+                    <tr v-for="(w, idx) in visibleWallets" :key="w.id" class="border-t border-brand-100">
                       <td class="px-3 py-2">
                         <input type="checkbox" v-model="w.selected" />
                       </td>
                       <td class="px-3 py-2">{{ walletOffset + idx + 1 }}</td>
-                      <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(w.address) }}</td>
+                      <td class="px-3 py-2 text-brand-600">{{ maskAddress(w.address) }}</td>
                       <td class="px-3 py-2">{{ w.balance === null ? "-" : w.balance.toFixed(2) }}</td>
-                      <td class="px-3 py-2 text-xs text-brand-500 dark:text-slate-400">{{ pairNameForWallet(w.id) }}</td>
+                      <td class="px-3 py-2 text-xs text-brand-500">{{ pairNameForWallet(w.id) }}</td>
                       <td v-if="useProxy" class="px-3 py-2">
-                        <select v-model="w.profileId" class="w-full rounded-lg border border-brand-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800">
+                        <select v-model="w.profileId" class="w-full rounded-lg border border-brand-200 px-2 py-1 text-xs">
                           <option v-for="profile in ipProfiles" :key="profile.id" :value="profile.id">{{ profile.name }}</option>
                         </select>
                       </td>
@@ -157,18 +163,18 @@
                 </table>
               </div>
 
-              <div class="flex items-center justify-between text-xs text-brand-500 dark:text-slate-400">
+              <div class="flex items-center justify-between text-xs text-brand-500">
                 <div>第 {{ walletPage }} / {{ totalWalletPages }} 页</div>
                 <div class="flex gap-2">
                   <button
-                    class="rounded-lg border border-brand-200 px-3 py-1 dark:border-slate-700"
+                    class="rounded-lg border border-brand-200 px-3 py-1"
                     :disabled="walletPage === 1"
                     @click="walletPage--"
                   >
                     上一页
                   </button>
                   <button
-                    class="rounded-lg border border-brand-200 px-3 py-1 dark:border-slate-700"
+                    class="rounded-lg border border-brand-200 px-3 py-1"
                     :disabled="walletPage === totalWalletPages"
                     @click="walletPage++"
                   >
@@ -181,18 +187,18 @@
 
             <section
               v-show="currentPage === 'hedge'"
-              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900"
+              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 class="font-display text-lg">对刷工作台</h2>
-                  <p class="text-xs text-brand-500 dark:text-slate-400">加载市场 → 查看深度 → 统一参数 → 手动确认。</p>
+                  <p class="text-xs text-brand-500">加载市场 → 查看深度 → 统一参数 → 手动确认。</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="toggleRefresh">
+                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="toggleRefresh">
                     {{ autoRefresh ? '暂停刷新' : '继续刷新' }}
                   </button>
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="refreshMarket">
+                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="refreshMarket">
                     模拟刷新
                   </button>
                 </div>
@@ -200,16 +206,16 @@
 
               <div class="mt-3 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
                 <div class="space-y-4">
-                  <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
+                  <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
-                      <div class="text-xs text-brand-500 dark:text-slate-400">市场加载</div>
-                      <div class="text-xs text-brand-500 dark:text-slate-400">{{ autoRefresh ? '自动刷新中' : '暂停刷新' }}</div>
+                      <div class="text-xs text-brand-500">市场加载</div>
+                      <div class="text-xs text-brand-500">{{ autoRefresh ? '自动刷新中' : '暂停刷新' }}</div>
                     </div>
                     <div class="mt-3 flex gap-2">
                       <input
                         v-model="marketInput"
                         placeholder="polymarket.com/event/... 或 slug"
-                        class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                        class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
                       />
                       <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="loadMarket">加载</button>
                     </div>
@@ -217,7 +223,7 @@
                       <button
                         v-for="sample in marketSamples"
                         :key="sample.slug"
-                        class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600 dark:border-slate-700 dark:text-slate-200"
+                        class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600"
                         @click="loadSampleMarket(sample.slug)"
                       >
                         {{ sample.title }}
@@ -225,41 +231,41 @@
                     </div>
                   </div>
 
-                  <div v-if="market" class="rounded-xl border border-brand-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 min-h-[140px]">
-                    <div class="text-xs text-brand-500 dark:text-slate-400">市场信息</div>
+                  <div v-if="market" class="rounded-xl border border-brand-100 bg-white p-3 min-h-[140px]">
+                    <div class="text-xs text-brand-500">市场信息</div>
                     <div class="mt-2 text-base font-medium">{{ market.title }}</div>
-                    <div class="mt-1 text-xs text-brand-500 dark:text-slate-400">状态：{{ market.status }} ｜ 更新时间：{{ market.updatedAt }}</div>
+                    <div class="mt-1 text-xs text-brand-500">状态：{{ market.status }} ｜ 更新时间：{{ market.updatedAt }}</div>
                     <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
-                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800">
-                        <div class="text-xs text-brand-500 dark:text-slate-400">Yes 价格</div>
-                        <div class="text-lg font-semibold text-brand-700 dark:text-slate-100">{{ market.yesPrice }}</div>
+                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                        <div class="text-xs text-brand-500">Yes 价格</div>
+                        <div class="text-lg font-semibold text-brand-700">{{ market.yesPrice }}</div>
                       </div>
-                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800">
-                        <div class="text-xs text-brand-500 dark:text-slate-400">No 价格</div>
-                        <div class="text-lg font-semibold text-brand-700 dark:text-slate-100">{{ market.noPrice }}</div>
+                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                        <div class="text-xs text-brand-500">No 价格</div>
+                        <div class="text-lg font-semibold text-brand-700">{{ market.noPrice }}</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="space-y-4">
-                  <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
+                  <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
-                      <div class="text-xs text-brand-500 dark:text-slate-400">盘口深度</div>
-                      <div class="text-xs text-brand-500 dark:text-slate-400">买一合计 {{ sumBid.toFixed(3) }}</div>
+                      <div class="text-xs text-brand-500">盘口深度</div>
+                      <div class="text-xs text-brand-500">买一合计 {{ sumBid.toFixed(3) }}</div>
                     </div>
-                    <div class="mt-2 text-xs text-brand-600 dark:text-slate-300">{{ sumHint }}</div>
+                    <div class="mt-2 text-xs text-brand-600">{{ sumHint }}</div>
                   </div>
 
                   <div v-if="market" class="space-y-3 min-h-[360px]">
-                    <div class="rounded-xl border border-brand-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                      <div class="text-xs text-brand-500 dark:text-slate-400">YES</div>
+                    <div class="rounded-xl border border-brand-100 bg-white p-3">
+                      <div class="text-xs text-brand-500">YES</div>
                       <div class="mt-2 space-y-1 text-sm">
                         <div class="flex items-center justify-between">
                           <span>买一价格</span>
                           <span class="font-semibold">{{ market.book.yesBids[0].price }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500 dark:text-slate-400">
+                        <div class="flex items-center justify-between text-xs text-brand-500">
                           <span>买一深度</span>
                           <span>{{ market.book.yesBids[0].size }}</span>
                         </div>
@@ -267,21 +273,21 @@
                           <span>卖一价格</span>
                           <span class="font-semibold">{{ market.book.yesAsks[0].price }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500 dark:text-slate-400">
+                        <div class="flex items-center justify-between text-xs text-brand-500">
                           <span>卖一深度</span>
                           <span>{{ market.book.yesAsks[0].size }}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div class="rounded-2xl border border-brand-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                      <div class="text-xs text-brand-500 dark:text-slate-400">NO</div>
+                    <div class="rounded-2xl border border-brand-100 bg-white p-3">
+                      <div class="text-xs text-brand-500">NO</div>
                       <div class="mt-2 space-y-1 text-sm">
                         <div class="flex items-center justify-between">
                           <span>买一价格</span>
                           <span class="font-semibold">{{ market.book.noBids[0].price }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500 dark:text-slate-400">
+                        <div class="flex items-center justify-between text-xs text-brand-500">
                           <span>买一深度</span>
                           <span>{{ market.book.noBids[0].size }}</span>
                         </div>
@@ -289,54 +295,54 @@
                           <span>卖一价格</span>
                           <span class="font-semibold">{{ market.book.noAsks[0].price }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500 dark:text-slate-400">
+                        <div class="flex items-center justify-between text-xs text-brand-500">
                           <span>卖一深度</span>
                           <span>{{ market.book.noAsks[0].size }}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div v-else class="rounded-xl border border-dashed border-brand-200 p-4 text-sm text-brand-500 dark:border-slate-700 dark:text-slate-400 min-h-[360px] flex items-center justify-center">
+                  <div v-else class="rounded-xl border border-dashed border-brand-200 p-4 text-sm text-brand-500 min-h-[360px] flex items-center justify-center">
                     请输入市场链接或 slug 后加载盘口。
                   </div>
                 </div>
               </div>
 
-              <div class="mt-4 rounded-2xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
+              <div class="mt-4 rounded-2xl border border-brand-100 bg-brand-50 p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                  <div class="text-sm font-medium text-brand-800 dark:text-slate-200">执行参数</div>
-                  <div class="text-xs text-brand-500 dark:text-slate-400">已选钱包对 {{ selectedPairs.length }}</div>
+                  <div class="text-sm font-medium text-brand-800">执行参数</div>
+                  <div class="text-xs text-brand-500">已选钱包对 {{ selectedPairs.length }}</div>
                 </div>
-                <div class="mt-3 rounded-xl border border-brand-100 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-900">
-                  <div v-if="pairs.length === 0" class="px-2 py-3 text-brand-500 dark:text-slate-400">暂无钱包对。</div>
+                <div class="mt-3 rounded-xl border border-brand-100 bg-white p-2 text-xs">
+                  <div v-if="pairs.length === 0" class="px-2 py-3 text-brand-500">暂无钱包对。</div>
                   <div v-else class="grid gap-2 md:grid-cols-4">
                     <label
                       v-for="pair in pairs"
                       :key="pair.id"
-                      class="flex items-center justify-between rounded-lg border border-brand-100 px-2 py-1 text-[11px] dark:border-slate-800"
+                      class="flex items-center justify-between rounded-lg border border-brand-100 px-2 py-1 text-[11px]"
                     >
-                      <span class="text-brand-700 dark:text-slate-200">{{ pair.name }}</span>
+                      <span class="text-brand-700">{{ pair.name }}</span>
                       <input type="checkbox" v-model="pair.selected" />
                     </label>
                   </div>
                 </div>
                 <div class="mt-3 flex flex-wrap items-center gap-3">
-                  <div class="rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs text-brand-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <div class="rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs text-brand-600">
                     执行模式：对冲单次执行（YES/NO）
                   </div>
-                  <label class="text-xs text-brand-500 dark:text-slate-400">统一数量</label>
-                  <input v-model.number="execution.size" type="number" min="0" class="w-24 rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <label class="text-xs text-brand-500">统一数量</label>
+                  <input v-model.number="execution.size" type="number" min="0" class="w-24 rounded-lg border border-brand-200 px-3 py-2 text-sm" />
                   <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="execute">执行确定</button>
                 </div>
               </div>
 
-              <div class="mt-3 rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft dark:border-slate-800 h-[160px]">
-                <div class="mb-2 flex items-center justify-between text-slate-400">
+              <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
+                <div class="mb-2 flex items-center justify-between text-brand-500">
                   <span>执行输出</span>
-                  <button class="text-xs text-slate-400 hover:text-slate-200" @click="clearLogs">清空</button>
+                  <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearLogs">清空</button>
                 </div>
                 <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
-                  <div v-if="logs.length === 0" class="text-slate-500">暂无输出，点击“执行确定”后显示结果。</div>
+                  <div v-if="logs.length === 0" class="text-brand-400">暂无输出，点击“执行确定”后显示结果。</div>
                   <div v-for="(log, idx) in logs" :key="`${log.ts}-${idx}`">
                     [{{ log.ts }}] {{ log.message }}
                   </div>
@@ -346,21 +352,21 @@
 
             <section
               v-show="currentPage === 'positions'"
-              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900"
+              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 class="font-display text-lg">仓位管理</h2>
-                  <p class="text-xs text-brand-500 dark:text-slate-400">点击查询后加载，避免一次性拉取大量数据。</p>
+                  <p class="text-xs text-brand-500">点击查询后加载，避免一次性拉取大量数据。</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                     @click="loadPositions"
                   >
                     {{ positionsLoading ? '查询中...' : '查询仓位' }}
                   </button>
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="clearPositions">
+                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="clearPositions">
                     清空
                   </button>
                   <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="redeemAll" :disabled="positions.length === 0">
@@ -368,9 +374,9 @@
                   </button>
                 </div>
               </div>
-              <div class="mt-3 max-h-[560px] overflow-auto rounded-xl border border-brand-100 dark:border-slate-800">
+              <div class="mt-3 max-h-[560px] overflow-auto rounded-xl border border-brand-100">
                 <table class="min-w-full text-sm">
-                  <thead class="bg-brand-50 text-xs text-brand-500 dark:bg-slate-800 dark:text-slate-400">
+                  <thead class="bg-brand-50 text-xs text-brand-500">
                     <tr>
                       <th class="px-3 py-2 text-left">#</th>
                       <th class="px-3 py-2 text-left">账户</th>
@@ -380,14 +386,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="positions.length === 0" class="border-t border-brand-100 dark:border-slate-800">
-                      <td colspan="5" class="px-3 py-6 text-center text-sm text-brand-500 dark:text-slate-400">
+                    <tr v-if="positions.length === 0" class="border-t border-brand-100">
+                      <td colspan="5" class="px-3 py-6 text-center text-sm text-brand-500">
                         暂无数据，请点击“查询仓位”。
                       </td>
                     </tr>
-                    <tr v-for="(pos, idx) in positions" :key="pos.id" class="border-t border-brand-100 dark:border-slate-800">
+                    <tr v-for="(pos, idx) in positions" :key="pos.id" class="border-t border-brand-100">
                       <td class="px-3 py-2">{{ idx + 1 }}</td>
-                      <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(pos.address) }}</td>
+                      <td class="px-3 py-2 text-brand-600">{{ maskAddress(pos.address) }}</td>
                       <td class="px-3 py-2">{{ pos.market }}</td>
                       <td class="px-3 py-2">{{ pos.size }}</td>
                       <td class="px-3 py-2">
@@ -403,7 +409,7 @@
                 </table>
               </div>
 
-              <div class="mt-3 rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft dark:border-slate-800 h-[160px]">
+              <div class="mt-3 rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft h-[160px]">
                 <div class="mb-2 flex items-center justify-between text-slate-400">
                   <span>执行输出</span>
                   <button class="text-xs text-slate-400 hover:text-slate-200" @click="clearDepositLogs">清空</button>
@@ -419,17 +425,17 @@
 
             <section
               v-show="currentPage === 'deposit'"
-              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900"
+              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 class="font-display text-lg">充值</h2>
-                  <p class="text-xs text-brand-500 dark:text-slate-400">从交易所批量充值到 Fund Address。</p>
-                  <p v-if="depositStatus" class="mt-2 text-xs text-emerald-600 dark:text-emerald-300">{{ depositStatus }}</p>
+                  <p class="text-xs text-brand-500">从交易所批量充值到 Fund Address。</p>
+                  <p v-if="depositStatus" class="mt-2 text-xs text-emerald-600">{{ depositStatus }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                     @click="refreshFundBalances"
                   >
                     查询余额
@@ -441,43 +447,43 @@
               </div>
 
               <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_1fr]">
-                <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
-                  <div class="text-xs font-semibold text-brand-700 dark:text-slate-200">交易所配置</div>
+                <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
+                  <div class="text-xs font-semibold text-brand-700">交易所配置</div>
                   <div class="mt-3 space-y-2 text-sm">
-                    <select v-model="exchangeConfig.name" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                    <select v-model="exchangeConfig.name" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
                       <option value="">选择交易所</option>
                       <option value="okx">OKX</option>
                       <option value="binance">Binance</option>
                     </select>
-                    <input v-model="exchangeConfig.apiKey" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="API Key" />
-                    <input v-model="exchangeConfig.apiSecret" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="API Secret" />
-                    <input v-model="exchangeConfig.ipWhitelist" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="IP 白名单（逗号分隔）" />
+                    <input v-model="exchangeConfig.apiKey" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="API Key" />
+                    <input v-model="exchangeConfig.apiSecret" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="API Secret" />
+                    <input v-model="exchangeConfig.ipWhitelist" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="IP 白名单（逗号分隔）" />
                   </div>
-                  <div class="mt-3 text-xs text-brand-500 dark:text-slate-400">用于交易所批量提现/充值配置。</div>
+                  <div class="mt-3 text-xs text-brand-500">用于交易所批量提现/充值配置。</div>
                 </div>
 
-                <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
-                  <div class="text-xs font-semibold text-brand-700 dark:text-slate-200">交易所提现参数</div>
+                <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
+                  <div class="text-xs font-semibold text-brand-700">交易所提现参数</div>
                   <div class="mt-3 space-y-2 text-sm">
-                    <label class="text-xs text-brand-500 dark:text-slate-400">每笔延迟（秒）</label>
+                    <label class="text-xs text-brand-500">每笔延迟（秒）</label>
                     <input
                       v-model.number="depositDelaySec"
                       type="number"
                       min="0"
-                      class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
                       placeholder="如 3 或 5"
                     />
                   </div>
-                  <div class="mt-3 text-xs text-brand-500 dark:text-slate-400">
+                  <div class="mt-3 text-xs text-brand-500">
                     充值将以“交易所提现”形式转入 Fund Address，可设置秒级延迟。
                   </div>
                 </div>
               </div>
 
               <div class="mt-3 space-y-3">
-                <div class="max-h-[560px] overflow-auto rounded-xl border border-brand-100 dark:border-slate-800">
+                <div class="max-h-[560px] overflow-auto rounded-xl border border-brand-100">
                   <table class="min-w-full text-sm">
-                    <thead class="bg-brand-50 text-xs text-brand-500 dark:bg-slate-800 dark:text-slate-400">
+                    <thead class="bg-brand-50 text-xs text-brand-500">
                       <tr>
                         <th class="px-3 py-2 text-left">选择</th>
                         <th class="px-3 py-2 text-left">#</th>
@@ -487,25 +493,25 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(row, idx) in fundRows" :key="row.id" class="border-t border-brand-100 dark:border-slate-800">
+                      <tr v-for="(row, idx) in fundRows" :key="row.id" class="border-t border-brand-100">
                         <td class="px-3 py-2">
                           <input type="checkbox" v-model="row.selected" />
                         </td>
                         <td class="px-3 py-2">{{ idx + 1 }}</td>
-                        <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(row.address) }}</td>
-                        <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(row.fundAddress) }}</td>
+                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
+                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.fundAddress) }}</td>
                       <td class="px-3 py-2">{{ row.balance === null ? "-" : row.balance.toFixed(2) }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <div class="rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft dark:border-slate-800 h-[160px]">
-                  <div class="mb-2 flex items-center justify-between text-slate-400">
+                <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
+                  <div class="mb-2 flex items-center justify-between text-brand-500">
                     <span>执行输出</span>
-                    <button class="text-xs text-slate-400 hover:text-slate-200" @click="clearDepositLogs">清空</button>
+                    <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearDepositLogs">清空</button>
                   </div>
                   <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
-                    <div v-if="depositLogs.length === 0" class="text-slate-500">暂无输出。</div>
+                    <div v-if="depositLogs.length === 0" class="text-brand-400">暂无输出。</div>
                     <div v-for="(log, idx) in depositLogs" :key="`${log.ts}-${idx}`">
                       [{{ log.ts }}] {{ log.message }}
                     </div>
@@ -516,22 +522,22 @@
 
             <section
               v-show="currentPage === 'withdraw'"
-              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900"
+              class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 class="font-display text-lg">提现</h2>
-                  <p class="text-xs text-brand-500 dark:text-slate-400">从 Fund Address 批量转出到外部地址。</p>
-                  <p v-if="withdrawStatus" class="mt-2 text-xs text-emerald-600 dark:text-emerald-300">{{ withdrawStatus }}</p>
+                  <p class="text-xs text-brand-500">从 Fund Address 批量转出到外部地址。</p>
+                  <p v-if="withdrawStatus" class="mt-2 text-xs text-emerald-600">{{ withdrawStatus }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200"
+                    class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                     @click="refreshWithdrawBalances"
                   >
                     查询余额
                   </button>
-                  <div class="flex flex-wrap items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700 dark:border-slate-700 dark:text-slate-200">
+                  <div class="flex flex-wrap items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700">
                     <label class="flex items-center gap-2">
                       <input type="radio" value="all" v-model="withdrawMode" />
                       清空
@@ -546,11 +552,11 @@
                         type="number"
                         min="0"
                         :disabled="withdrawMode !== 'partial'"
-                        class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs"
                         placeholder="批量金额"
                       />
                       <button
-                        class="rounded-md border border-brand-200 px-2 py-1 text-[11px] dark:border-slate-700 dark:text-slate-200"
+                        class="rounded-md border border-brand-200 px-2 py-1 text-[11px]"
                         :disabled="withdrawMode !== 'partial'"
                         @click="applyWithdrawAmount"
                       >
@@ -558,7 +564,7 @@
                       </button>
                     </div>
                   </div>
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="showWithdrawConfig = true">
+                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = true">
                     配置转入地址
                   </button>
                   <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="bulkWithdraw">
@@ -569,9 +575,9 @@
 
 
               <div class="mt-3 space-y-3">
-                  <div class="max-h-[560px] overflow-auto rounded-xl border border-brand-100 dark:border-slate-800">
+                  <div class="max-h-[560px] overflow-auto rounded-xl border border-brand-100">
                     <table class="min-w-full text-sm">
-                      <thead class="bg-brand-50 text-xs text-brand-500 dark:bg-slate-800 dark:text-slate-400">
+                      <thead class="bg-brand-50 text-xs text-brand-500">
                         <tr>
                           <th class="px-3 py-2 text-left">选择</th>
                           <th class="px-3 py-2 text-left">#</th>
@@ -583,20 +589,20 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(row, idx) in withdrawRows" :key="row.id" class="border-t border-brand-100 dark:border-slate-800">
+                        <tr v-for="(row, idx) in withdrawRows" :key="row.id" class="border-t border-brand-100">
                           <td class="px-3 py-2">
                             <input type="checkbox" v-model="row.selected" />
                           </td>
                           <td class="px-3 py-2">{{ idx + 1 }}</td>
-                          <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(row.address) }}</td>
-                          <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(row.fundAddress) }}</td>
-                          <td class="px-3 py-2 text-brand-600 dark:text-slate-300">{{ maskAddress(row.withdrawAddress) }}</td>
+                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
+                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.fundAddress) }}</td>
+                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.withdrawAddress) }}</td>
                           <td v-if="withdrawMode === 'partial'" class="px-3 py-2">
                             <input
                               v-model.number="row.amount"
                               type="number"
                               min="0"
-                              class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                              class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs"
                               placeholder="金额"
                             />
                           </td>
@@ -605,13 +611,13 @@
                       </tbody>
                     </table>
                   </div>
-                  <div class="rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft dark:border-slate-800 h-[160px]">
-                    <div class="mb-2 flex items-center justify-between text-slate-400">
+                  <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
+                    <div class="mb-2 flex items-center justify-between text-brand-500">
                       <span>执行输出</span>
-                      <button class="text-xs text-slate-400 hover:text-slate-200" @click="clearWithdrawLogs">清空</button>
+                      <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearWithdrawLogs">清空</button>
                     </div>
                     <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
-                      <div v-if="withdrawLogs.length === 0" class="text-slate-500">暂无输出。</div>
+                      <div v-if="withdrawLogs.length === 0" class="text-brand-400">暂无输出。</div>
                       <div v-for="(log, idx) in withdrawLogs" :key="`${log.ts}-${idx}`">
                         [{{ log.ts }}] {{ log.message }}
                       </div>
@@ -626,61 +632,61 @@
   </div>
 
   <div v-if="showImport" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showImport = false">
-    <div class="w-full max-w-2xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)] dark:border-slate-800 dark:bg-slate-900">
+    <div class="w-full max-w-2xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900 dark:text-slate-100">导入账户</h2>
-        <button class="text-sm text-brand-500 dark:text-slate-400" @click="showImport = false">关闭</button>
+        <h2 class="font-display text-lg text-brand-900">导入账户</h2>
+        <button class="text-sm text-brand-500" @click="showImport = false">关闭</button>
       </div>
-      <p class="mt-2 text-sm text-brand-700 dark:text-slate-200">输入私钥（仅当前会话），支持多行导入或 CSV 文件导入。</p>
-      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-500 dark:text-slate-400">
-        <label class="rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700 dark:border-slate-700 dark:text-slate-200">
+      <p class="mt-2 text-sm text-brand-700">输入私钥（仅当前会话），支持多行导入或 CSV 文件导入。</p>
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-brand-500">
+        <label class="rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700">
           <input type="file" accept=".csv,text/csv" class="hidden" @change="handleCsvImport" />
           选择 CSV 文件
         </label>
-        <span class="text-brand-700 dark:text-slate-200">CSV 格式：privateKey 或 index,privateKey（无需标题行）</span>
+        <span class="text-brand-700">CSV 格式：privateKey 或 index,privateKey（无需标题行）</span>
       </div>
       <div class="mt-4 relative">
-        <div class="pointer-events-none absolute inset-y-2 left-2 w-10 overflow-hidden text-xs text-brand-500 dark:text-slate-400">
+        <div class="pointer-events-none absolute inset-y-2 left-2 w-10 overflow-hidden text-xs text-brand-500">
           <div v-for="(line, idx) in importLines" :key="`ln-${idx}`" class="h-5 leading-5">
             {{ idx + 1 }}
           </div>
         </div>
         <textarea
           v-model="importText"
-          class="h-40 w-full rounded-xl border border-brand-200 p-3 pl-12 text-sm leading-5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="h-40 w-full rounded-xl border border-brand-200 p-3 pl-12 text-sm leading-5"
           placeholder="每行一个私钥，或 CSV：index,privateKey"
         ></textarea>
       </div>
       <div class="mt-4 flex justify-end gap-2">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="showImport = false">取消</button>
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showImport = false">取消</button>
         <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="confirmImport">导入</button>
       </div>
     </div>
   </div>
 
   <div v-if="showFlow" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showFlow = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)] dark:border-slate-800 dark:bg-slate-900">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900 dark:text-slate-100">操作流程</h2>
-        <button class="text-sm text-brand-500 dark:text-slate-400" @click="showFlow = false">关闭</button>
+        <h2 class="font-display text-lg text-brand-900">操作流程</h2>
+        <button class="text-sm text-brand-500" @click="showFlow = false">关闭</button>
       </div>
-      <div class="mt-6 rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-slate-800 dark:bg-slate-800">
+      <div class="mt-6 rounded-2xl border border-brand-100 bg-brand-50 p-4">
         <div class="grid gap-3 md:grid-cols-2">
           <div
             v-for="(step, idx) in flowSteps"
             :key="step.title"
-            class="flex items-center gap-3 rounded-xl border border-brand-100 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+            class="flex items-center gap-3 rounded-xl border border-brand-100 bg-white p-3"
           >
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
               {{ idx + 1 }}
             </div>
             <div>
-              <div class="text-sm font-semibold text-brand-900 dark:text-slate-100">{{ step.title }}</div>
-              <div class="text-xs text-brand-700 dark:text-slate-200">{{ step.desc }}</div>
+              <div class="text-sm font-semibold text-brand-900">{{ step.title }}</div>
+              <div class="text-xs text-brand-700">{{ step.desc }}</div>
             </div>
           </div>
         </div>
-        <div class="mt-4 rounded-xl border border-brand-100 bg-white p-3 text-xs text-brand-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+        <div class="mt-4 rounded-xl border border-brand-100 bg-white p-3 text-xs text-brand-800">
           注意事项：买一合计接近 1；差距过大可能产生磨损；提前卖出可能有 0.1% 磨损，建议等待 Redeem。
         </div>
       </div>
@@ -688,20 +694,20 @@
   </div>
 
   <div v-if="showPairs" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showPairs = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)] dark:border-slate-800 dark:bg-slate-900">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900 dark:text-slate-100">钱包对管理</h2>
-        <button class="text-sm text-brand-500 dark:text-slate-400" @click="showPairs = false">关闭</button>
+        <h2 class="font-display text-lg text-brand-900">钱包对管理</h2>
+        <button class="text-sm text-brand-500" @click="showPairs = false">关闭</button>
       </div>
-      <p class="mt-2 text-xs text-brand-500 dark:text-slate-400">默认按导入顺序自动配对，可勾选参与并设置方向。</p>
+      <p class="mt-2 text-xs text-brand-500">默认按导入顺序自动配对，可勾选参与并设置方向。</p>
       <div class="mt-4 max-h-96 space-y-2 overflow-auto">
-        <div v-for="(p, idx) in pairs" :key="p.id" class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-800">
+        <div v-for="(p, idx) in pairs" :key="p.id" class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm">
           <div class="flex items-center justify-between gap-3">
-            <div class="text-xs font-semibold text-brand-700 dark:text-slate-200">Pair {{ idx + 1 }}</div>
-            <div class="text-xs text-brand-500 dark:text-slate-300">
+            <div class="text-xs font-semibold text-brand-700">Pair {{ idx + 1 }}</div>
+            <div class="text-xs text-brand-500">
               {{ nameForWallet(p.a) }} ｜ {{ nameForWallet(p.b) }}
             </div>
-            <label class="flex items-center gap-2 text-xs text-brand-600 dark:text-slate-300">
+            <label class="flex items-center gap-2 text-xs text-brand-600">
               <input type="checkbox" v-model="p.selected" /> 参与
             </label>
           </div>
@@ -711,23 +717,23 @@
   </div>
 
   <div v-if="showProxy" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showProxy = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)] dark:border-slate-800 dark:bg-slate-900">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900 dark:text-slate-100">IP 代理配置</h2>
-        <button class="text-sm text-brand-500 dark:text-slate-400" @click="showProxy = false">关闭</button>
+        <h2 class="font-display text-lg text-brand-900">IP 代理配置</h2>
+        <button class="text-sm text-brand-500" @click="showProxy = false">关闭</button>
       </div>
-      <p class="mt-2 text-xs text-brand-500 dark:text-slate-400">为账户配置代理地址，选择后会关联到钱包。</p>
+      <p class="mt-2 text-xs text-brand-500">为账户配置代理地址，选择后会关联到钱包。</p>
       <div class="mt-4 space-y-2">
-        <div v-for="profile in ipProfiles" :key="profile.id" class="grid items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[140px_1fr_100px]">
-          <input v-model="profile.name" class="rounded-lg border border-brand-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="名称" />
-          <input v-model="profile.endpoint" class="rounded-lg border border-brand-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" placeholder="http://user:pass@host:port" />
-          <button class="rounded-lg border border-brand-200 px-2 py-1 text-xs text-brand-700 dark:border-slate-600 dark:text-slate-100" @click="copyEndpoint(profile.endpoint)">
+        <div v-for="profile in ipProfiles" :key="profile.id" class="grid items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm md:grid-cols-[140px_1fr_100px]">
+          <input v-model="profile.name" class="rounded-lg border border-brand-200 px-2 py-1 text-sm" placeholder="名称" />
+          <input v-model="profile.endpoint" class="rounded-lg border border-brand-200 px-2 py-1 text-sm" placeholder="http://user:pass@host:port" />
+          <button class="rounded-lg border border-brand-200 px-2 py-1 text-xs text-brand-700" @click="copyEndpoint(profile.endpoint)">
             复制
           </button>
         </div>
       </div>
       <div class="mt-4 flex justify-between">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="addProxyProfile">
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="addProxyProfile">
           新增配置
         </button>
         <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showProxy = false">完成</button>
@@ -736,19 +742,19 @@
   </div>
 
   <div v-if="showWithdrawConfig" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWithdrawConfig = false">
-    <div class="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)] dark:border-slate-800 dark:bg-slate-900">
+    <div class="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900 dark:text-slate-100">转入地址配置</h2>
-        <button class="text-sm text-brand-500 dark:text-slate-400" @click="showWithdrawConfig = false">关闭</button>
+        <h2 class="font-display text-lg text-brand-900">转入地址配置</h2>
+        <button class="text-sm text-brand-500" @click="showWithdrawConfig = false">关闭</button>
       </div>
-      <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3 dark:border-slate-800 dark:bg-slate-800">
-        <div class="text-xs font-semibold text-brand-800 dark:text-slate-100">模式选择</div>
-        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-brand-800 dark:text-slate-100">
-          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 dark:border-slate-700">
+      <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3">
+        <div class="text-xs font-semibold text-brand-800">模式选择</div>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-brand-800">
+          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
             <input type="radio" value="many-to-many" v-model="transferMode" />
             多转多
           </label>
-          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 dark:border-slate-700">
+          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
             <input type="radio" value="many-to-one" v-model="transferMode" />
             多转一
           </label>
@@ -756,24 +762,24 @@
       </div>
       <div class="mt-4">
         <div v-if="transferMode === 'many-to-many'">
-          <p class="text-xs text-brand-700 dark:text-slate-200">多转多：每行一个转入地址，或 index,address。</p>
+          <p class="text-xs text-brand-700">多转多：每行一个转入地址，或 index,address。</p>
           <textarea
             v-model="withdrawImportText"
-            class="mt-3 h-48 w-full rounded-xl border border-brand-200 p-3 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            class="mt-3 h-48 w-full rounded-xl border border-brand-200 p-3 text-xs"
             placeholder="0x...\n0x..."
           ></textarea>
         </div>
         <div v-else>
-          <p class="text-xs text-brand-700 dark:text-slate-200">多转一：填写单一转入地址。</p>
+          <p class="text-xs text-brand-700">多转一：填写单一转入地址。</p>
           <input
             v-model="singleTargetAddress"
-            class="mt-3 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            class="mt-3 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
             placeholder="目标地址"
           />
         </div>
       </div>
       <div class="mt-4 flex justify-end gap-2">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700 dark:border-slate-700 dark:text-slate-200" @click="showWithdrawConfig = false">
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
           取消
         </button>
         <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
@@ -802,6 +808,7 @@ const showProxy = ref(false);
 const showWithdrawConfig = ref(false);
 const autoRefresh = ref(true);
 const useProxy = ref(true);
+const darkMode = ref(false);
 const currentPage = ref<"wallets" | "hedge" | "positions" | "deposit" | "withdraw">("wallets");
 
 const ipProfiles = reactive([
