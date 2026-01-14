@@ -11,7 +11,7 @@
           <div class="flex flex-wrap items-center gap-3">
             <button
               class="rounded-full bg-brand-600 px-4 py-2 text-sm text-white shadow-soft hover:bg-brand-700"
-              @click="showFlow = true"
+              @click="openFlow"
             >
               操作说明
             </button>
@@ -33,14 +33,14 @@
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'wallets' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="currentPage = 'wallets'"
+                  @click="openWallets"
                 >
                 钱包管理
               </button>
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'hedge' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="currentPage = 'hedge'"
+                  @click="openHedgeDesk"
                 >
                 对刷工作台
               </button>
@@ -54,14 +54,14 @@
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'deposit' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="currentPage = 'deposit'"
+                  @click="openDeposit"
                 >
                 充值
               </button>
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'withdraw' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="currentPage = 'withdraw'"
+                  @click="openWithdraw"
                 >
                 提现
               </button>
@@ -79,7 +79,7 @@
                   <p class="text-xs text-brand-500">支持 100+ 钱包滚动与分页展示。</p>
                 </div>
               <div class="flex flex-wrap gap-2">
-                <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showImport = true">导入钱包</button>
+                <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="openImport">导入钱包</button>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="exportKeys"
@@ -88,7 +88,7 @@
                 </button>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
-                  @click="showPairs = true"
+                  @click="openPairs"
                 >
                   钱包对管理
                 </button>
@@ -98,7 +98,7 @@
                 </label>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
-                  @click="showProxy = true"
+                  @click="openProxy"
                 >
                   IP 配置
                 </button>
@@ -136,7 +136,12 @@
                 <table class="min-w-full text-sm">
                   <thead class="sticky top-0 bg-brand-50 text-xs text-brand-500">
                     <tr>
-                      <th class="px-3 py-2 text-left">选择</th>
+                      <th class="px-3 py-2 text-left">
+                        <div class="flex items-center gap-2">
+                          <input type="checkbox" :checked="walletsHeaderChecked" @change="toggleWalletsHeader" />
+                          <span>选择</span>
+                        </div>
+                      </th>
                       <th class="px-3 py-2 text-left">#</th>
                       <th class="px-3 py-2 text-left">地址</th>
                       <th class="px-3 py-2 text-left">余额</th>
@@ -255,6 +260,9 @@
                       <div class="text-xs text-brand-500">买一合计 {{ sumBid.toFixed(3) }}</div>
                     </div>
                     <div class="mt-2 text-xs text-brand-600">{{ sumHint }}</div>
+                    <div v-if="sumAlert" class="mt-2 text-xs" :class="sumAlert.tone">
+                      {{ sumAlert.message }}
+                    </div>
                   </div>
 
                   <div v-if="market" class="space-y-3 min-h-[360px]">
@@ -332,7 +340,23 @@
                   </div>
                   <label class="text-xs text-brand-500">统一数量</label>
                   <input v-model.number="execution.size" type="number" min="0" class="w-24 rounded-lg border border-brand-200 px-3 py-2 text-sm" />
+                  <div class="text-xs text-brand-500">
+                    预计交易价值：{{ executionNotionalLabel }}
+                  </div>
                   <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="execute">执行确定</button>
+                  <button
+                    class="flex h-8 w-8 items-center justify-center rounded-full border border-brand-200 text-xs text-brand-500 hover:text-brand-800"
+                    @click="showExecutionNotice = !showExecutionNotice"
+                    title="执行说明"
+                  >
+                    !
+                  </button>
+                </div>
+                <div
+                  v-if="showExecutionNotice"
+                  class="mt-2 rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs text-brand-600"
+                >
+                  交易对会按顺序执行：先买卖 YES/NO，执行输出是 wallet1 完成后再到 wallet2 的模拟流程。
                 </div>
               </div>
 
@@ -440,9 +464,6 @@
                   >
                     查询余额
                   </button>
-                  <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="confirmDeposit">
-                    开始
-                  </button>
                 </div>
               </div>
 
@@ -473,9 +494,33 @@
                       class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
                       placeholder="如 3 或 5"
                     />
+                    <label class="text-xs text-brand-500">充值金额区间</label>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model.number="depositAmountMin"
+                        type="number"
+                        min="0"
+                        class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+                        placeholder="最小金额"
+                      />
+                      <span class="text-xs text-brand-400">-</span>
+                      <input
+                        v-model.number="depositAmountMax"
+                        type="number"
+                        min="0"
+                        class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+                        placeholder="最大金额"
+                      />
+                    </div>
+                    <button
+                      class="mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-base font-semibold text-white shadow-soft hover:bg-brand-700"
+                      @click="confirmDeposit"
+                    >
+                      开始
+                    </button>
                   </div>
                   <div class="mt-3 text-xs text-brand-500">
-                    充值将以“交易所提现”形式转入 Fund Address，可设置秒级延迟。
+                    充值将以“交易所提现”形式转入 Fund Address，可设置秒级延迟与金额区间随机。
                   </div>
                 </div>
               </div>
@@ -485,7 +530,12 @@
                   <table class="min-w-full text-sm">
                     <thead class="bg-brand-50 text-xs text-brand-500">
                       <tr>
-                        <th class="px-3 py-2 text-left">选择</th>
+                        <th class="px-3 py-2 text-left">
+                          <div class="flex items-center gap-2">
+                            <input type="checkbox" :checked="fundHeaderChecked" @change="toggleFundHeader" />
+                            <span>选择</span>
+                          </div>
+                        </th>
                         <th class="px-3 py-2 text-left">#</th>
                         <th class="px-3 py-2 text-left">钱包地址</th>
                         <th class="px-3 py-2 text-left">Fund Address</th>
@@ -564,7 +614,7 @@
                       </button>
                     </div>
                   </div>
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = true">
+                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="openWithdrawConfig">
                     配置转入地址
                   </button>
                   <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="bulkWithdraw">
@@ -579,7 +629,12 @@
                     <table class="min-w-full text-sm">
                       <thead class="bg-brand-50 text-xs text-brand-500">
                         <tr>
-                          <th class="px-3 py-2 text-left">选择</th>
+                          <th class="px-3 py-2 text-left">
+                            <div class="flex items-center gap-2">
+                              <input type="checkbox" :checked="withdrawHeaderChecked" @change="toggleWithdrawHeader" />
+                              <span>选择</span>
+                            </div>
+                          </th>
                           <th class="px-3 py-2 text-left">#</th>
                           <th class="px-3 py-2 text-left">钱包地址</th>
                           <th class="px-3 py-2 text-left">Fund Address</th>
@@ -657,38 +712,305 @@
           placeholder="每行一个私钥，或 CSV：index,privateKey"
         ></textarea>
       </div>
-      <div class="mt-4 flex justify-end gap-2">
+      <div class="mt-4 flex justify-between gap-2">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('import'); showImport = false">今天内不再显示</button>
+        <div class="flex gap-2">
         <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showImport = false">取消</button>
         <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="confirmImport">导入</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div v-if="showFlow" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showFlow = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">操作流程</h2>
-        <button class="text-sm text-brand-500" @click="showFlow = false">关闭</button>
+  <div v-if="showFlow" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4" @click.self="showFlow = false">
+    <div class="w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-[0_28px_80px_rgba(7,20,60,0.35)]">
+      <div class="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.14),transparent_55%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_45%),linear-gradient(120deg,#f8fafc,#ecfdf5)] px-6 py-4">
+        <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-emerald-200/40 blur-2xl"></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.26em] text-brand-500">How It Works</div>
+            <h2 class="font-display text-xl text-brand-900 md:text-2xl">操作说明</h2>
+          </div>
+          <button class="text-xs text-brand-500" @click="showFlow = false">关闭</button>
+        </div>
       </div>
-      <div class="mt-6 rounded-2xl border border-brand-100 bg-brand-50 p-4">
-        <div class="grid gap-3 md:grid-cols-2">
+      <div class="max-h-[calc(80vh-112px)] overflow-auto p-6">
+        <div class="flex flex-col gap-3">
           <div
             v-for="(step, idx) in flowSteps"
             :key="step.title"
-            class="flex items-center gap-3 rounded-xl border border-brand-100 bg-white p-3"
+            class="flex items-center gap-3"
           >
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
-              {{ idx + 1 }}
+            <div class="w-20 text-center text-xs font-semibold text-brand-500">
+              Step {{ idx + 1 }}
             </div>
-            <div>
-              <div class="text-sm font-semibold text-brand-900">{{ step.title }}</div>
-              <div class="text-xs text-brand-700">{{ step.desc }}</div>
+            <div class="flex-1 rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
+              <div class="flex flex-wrap items-center gap-2 text-xs text-brand-600">
+                <span class="font-semibold text-brand-700">{{ step.title }}</span>
+                <span class="text-brand-400">—</span>
+                <span>{{ step.desc }}</span>
+              </div>
+            </div>
+            <div v-if="idx < flowSteps.length - 1" class="text-brand-400">
+              <span class="text-xl">↓</span>
             </div>
           </div>
         </div>
-        <div class="mt-4 rounded-xl border border-brand-100 bg-white p-3 text-xs text-brand-800">
-          注意事项：买一合计接近 1；差距过大可能产生磨损；提前卖出可能有 0.1% 磨损，建议等待 Redeem。
+        <div class="mt-5 rounded-2xl border border-brand-100 bg-white p-5">
+          <div class="text-xs font-semibold text-brand-600">注意事项</div>
+          <div class="mt-3 grid gap-2 md:grid-cols-2">
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              买一合计接近 1；差距过大可能产生磨损。
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              提前卖出可能有 0.1% 磨损，建议等待 Redeem。
+            </div>
+          </div>
         </div>
+        <div class="mt-6 flex items-center justify-end">
+          <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand-700" @click="showFlow = false">
+            我已了解
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showIntro" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4" @click.self="showIntro = false">
+    <div class="w-full max-w-4xl overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-[0_28px_80px_rgba(7,20,60,0.35)]">
+      <div class="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.18),transparent_55%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.2),transparent_45%),linear-gradient(120deg,#f8fafc,#ecfdf5)] p-6">
+        <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-200/40 blur-2xl"></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs uppercase tracking-[0.3em] text-brand-500">Onboarding</div>
+            <h2 class="font-display text-2xl text-brand-900 md:text-3xl">Polymarket 刷交互门户</h2>
+            <p class="mt-2 text-sm text-brand-600">
+              用于多账户联动、刷交易量与交互记录的工作台。
+            </p>
+          </div>
+          <button class="text-sm text-brand-500" @click="showIntro = false">关闭</button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
+            <div class="flex items-center gap-2 text-xs font-semibold text-brand-700">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-white">1</span>
+              平台原理
+            </div>
+            <div class="mt-3 text-xs text-brand-600">
+              用户配置双数钱包，互相成为关联钱包，支持同时买卖进行对刷，获取交易量与交互记录。
+            </div>
+          </div>
+          <div class="rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
+            <div class="flex items-center gap-2 text-xs font-semibold text-brand-700">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-white">2</span>
+              交易模式
+            </div>
+            <div class="mt-3 text-xs text-brand-600">
+              可等待结果结算后 Redeem，也可在市场中同时卖出完成刷交互。
+            </div>
+          </div>
+          <div class="rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
+            <div class="flex items-center gap-2 text-xs font-semibold text-brand-700">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-white">3</span>
+              IP 隔离
+            </div>
+            <div class="mt-3 text-xs text-brand-600">
+              支持配置 IP 代理隔离不同账户，使用不同 IP 发起请求。
+            </div>
+          </div>
+          <div class="rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
+            <div class="flex items-center gap-2 text-xs font-semibold text-brand-700">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-white">4</span>
+              支持与反馈
+            </div>
+            <div class="mt-3 text-xs text-brand-600">
+              平台目前免费，支持多个账户交互；如遇问题请及时反馈开发者。
+            </div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-2xl border border-brand-100 bg-white p-5">
+          <div class="text-xs font-semibold text-brand-600">使用提醒</div>
+          <div class="mt-3 grid gap-2 md:grid-cols-2">
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              买一合计偏离 1 时注意磨损与差价。
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              本平台以刷交易为主，避免赌博心态，理性参与。
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              执行前请检查参数与钱包对，避免不必要损失。
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              如遇异常请及时联系开发者。
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between">
+          <button class="text-xs text-brand-500" @click="hidePopupForToday('intro'); showIntro = false">今天内不再显示</button>
+          <button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand-700" @click="showIntro = false">
+            开始使用
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showHedgeGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showHedgeGuide = false">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">对刷工作台使用说明</h2>
+        <button class="text-sm text-brand-500" @click="showHedgeGuide = false">关闭</button>
+      </div>
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">1. 导入钱包</div>
+          <div class="mt-2 text-xs text-brand-600">在“钱包管理”导入私钥并确认钱包对。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">2. 加载市场</div>
+          <div class="mt-2 text-xs text-brand-600">输入链接或 slug，观察 Yes/No 与买一合计。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">3. 设置参数</div>
+          <div class="mt-2 text-xs text-brand-600">选择钱包对，填写统一数量，确认预计交易价值。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">4. 执行确认</div>
+          <div class="mt-2 text-xs text-brand-600">按顺序执行 YES/NO，执行输出将从 wallet1 依次到 wallet2。</div>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
+        <div class="text-xs font-semibold text-brand-600">注意事项</div>
+        <div class="mt-3 space-y-2">
+          <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+            买一合计偏离 1 时注意磨损与差价。
+          </div>
+          <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+            本平台以刷交易为主，避免赌博心态，理性参与。
+          </div>
+          <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+            执行前请检查参数与钱包对，避免不必要损失。
+          </div>
+          <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+            如遇异常请及时联系开发者。
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('hedgeGuide'); showHedgeGuide = false">今天内不再显示</button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showHedgeGuide = false">
+          我已了解
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showWalletGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWalletGuide = false">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">钱包管理使用说明</h2>
+        <button class="text-sm text-brand-500" @click="showWalletGuide = false">关闭</button>
+      </div>
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">导入钱包</div>
+          <div class="mt-2 text-xs text-brand-600">支持多行私钥或 CSV 导入，钱包将自动生成昵称。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">钱包对管理</div>
+          <div class="mt-2 text-xs text-brand-600">按顺序自动配对，勾选参与的钱包对。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">IP 代理配置</div>
+          <div class="mt-2 text-xs text-brand-600">可为不同钱包配置代理，进行 IP 隔离。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">余额与筛选</div>
+          <div class="mt-2 text-xs text-brand-600">支持搜索、分页与余额刷新，便于快速定位钱包。</div>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
+        请确认钱包为双数并保管好私钥，平台仅用于当前会话展示。
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('walletGuide'); showWalletGuide = false">今天内不再显示</button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showWalletGuide = false">
+          我已了解
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showDepositGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showDepositGuide = false">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">充值使用说明</h2>
+        <button class="text-sm text-brand-500" @click="showDepositGuide = false">关闭</button>
+      </div>
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">交易所配置</div>
+          <div class="mt-2 text-xs text-brand-600">填写交易所 API Key/Secret 与 IP 白名单。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">提现参数</div>
+          <div class="mt-2 text-xs text-brand-600">设置每笔延迟与充值金额区间，系统按区间随机。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">选择地址</div>
+          <div class="mt-2 text-xs text-brand-600">勾选 Fund Address 进行批量充值。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">开始执行</div>
+          <div class="mt-2 text-xs text-brand-600">点击开始后按顺序提交，日志中可查看金额。</div>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
+        请先核对地址与金额区间，避免误操作。
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('depositGuide'); showDepositGuide = false">今天内不再显示</button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showDepositGuide = false">
+          我已了解
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showWithdrawGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWithdrawGuide = false">
+    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">提现使用说明</h2>
+        <button class="text-sm text-brand-500" @click="showWithdrawGuide = false">关闭</button>
+      </div>
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">模式选择</div>
+          <div class="mt-2 text-xs text-brand-600">支持清空或部分提现，部分模式需填写金额。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">转出方式</div>
+          <div class="mt-2 text-xs text-brand-600">多转多或多转一，按需配置目标地址。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">批量金额</div>
+          <div class="mt-2 text-xs text-brand-600">可对选中地址一键应用统一金额。</div>
+        </div>
+        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <div class="text-xs font-semibold text-brand-600">执行输出</div>
+          <div class="mt-2 text-xs text-brand-600">执行后查看日志，核对地址与金额。</div>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
+        转账前请复核目标地址与模式选择。
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('withdrawGuide'); showWithdrawGuide = false">今天内不再显示</button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showWithdrawGuide = false">
+          我已了解
+        </button>
       </div>
     </div>
   </div>
@@ -700,6 +1022,10 @@
         <button class="text-sm text-brand-500" @click="showPairs = false">关闭</button>
       </div>
       <p class="mt-2 text-xs text-brand-500">默认按导入顺序自动配对，可勾选参与并设置方向。</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="rounded-lg border border-brand-200 px-3 py-1 text-xs text-brand-700" @click="selectAllPairs(true)">全选</button>
+        <button class="rounded-lg border border-brand-200 px-3 py-1 text-xs text-brand-700" @click="selectAllPairs(false)">全不选</button>
+      </div>
       <div class="mt-4 max-h-96 space-y-2 overflow-auto">
         <div v-for="(p, idx) in pairs" :key="p.id" class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm">
           <div class="flex items-center justify-between gap-3">
@@ -712,6 +1038,12 @@
             </label>
           </div>
         </div>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('pairs'); showPairs = false">今天内不再显示</button>
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showPairs = false">
+          关闭
+        </button>
       </div>
     </div>
   </div>
@@ -732,11 +1064,14 @@
           </button>
         </div>
       </div>
-      <div class="mt-4 flex justify-between">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="addProxyProfile">
-          新增配置
-        </button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showProxy = false">完成</button>
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('proxy'); showProxy = false">今天内不再显示</button>
+        <div class="flex gap-2">
+          <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="addProxyProfile">
+            新增配置
+          </button>
+          <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showProxy = false">完成</button>
+        </div>
       </div>
     </div>
   </div>
@@ -778,13 +1113,16 @@
           />
         </div>
       </div>
-      <div class="mt-4 flex justify-end gap-2">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
-          取消
-        </button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
-          应用配置
-        </button>
+      <div class="mt-4 flex items-center justify-between gap-2">
+        <button class="text-xs text-brand-500" @click="hidePopupForToday('withdrawConfig'); showWithdrawConfig = false">今天内不再显示</button>
+        <div class="flex gap-2">
+          <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
+            取消
+          </button>
+          <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
+            应用配置
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -806,10 +1144,32 @@ const showPairs = ref(false);
 const showFlow = ref(false);
 const showProxy = ref(false);
 const showWithdrawConfig = ref(false);
+const showExecutionNotice = ref(false);
+const showHedgeGuide = ref(false);
+const showWalletGuide = ref(false);
+const showDepositGuide = ref(false);
+const showWithdrawGuide = ref(false);
+const showIntro = ref(false);
 const autoRefresh = ref(true);
 const useProxy = ref(true);
 const darkMode = ref(false);
 const currentPage = ref<"wallets" | "hedge" | "positions" | "deposit" | "withdraw">("wallets");
+
+const shouldShowPopup = (key: string) => {
+  if (typeof window === "undefined") return true;
+  const stored = localStorage.getItem(`hidePopup:${key}`);
+  return stored !== new Date().toDateString();
+};
+
+const hidePopupForToday = (key: string) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(`hidePopup:${key}`, new Date().toDateString());
+  }
+};
+
+if (shouldShowPopup("intro")) {
+  showIntro.value = true;
+}
 
 const ipProfiles = reactive([
   { id: "auto", name: "自动", endpoint: "" },
@@ -825,11 +1185,13 @@ const marketSamples = [
 ];
 
 const flowSteps = [
-  { title: "导入账户", desc: "保持双数钱包" },
-  { title: "加载市场", desc: "确认状态与价格" },
-  { title: "查看深度", desc: "买一合计接近 1" },
-  { title: "设置参数", desc: "统一数量" },
-  { title: "手动确认", desc: "执行操作" },
+  { title: "导入账户", desc: "在钱包管理中导入私钥或 CSV，确保钱包为双数并完成基础校验。" },
+  { title: "配置钱包对", desc: "进入钱包对管理，确认配对与参与状态；需要隔离时绑定不同 IP 代理。" },
+  { title: "加载市场", desc: "粘贴市场链接或 slug，确认市场状态、更新时间与 Yes/No 报价。" },
+  { title: "查看盘口", desc: "关注买一价格与深度，合计接近 1 时更稳；偏离过大需谨慎。" },
+  { title: "设置参数", desc: "选择参与的钱包对，输入统一数量，核对预计交易价值。" },
+  { title: "执行确认", desc: "点击执行确认，系统按顺序模拟买卖 YES/NO，输出执行日志。" },
+  { title: "复盘处理", desc: "查看仓位与执行结果，可等待结算 Redeem 或择机卖出。" },
 ];
 
 
@@ -845,6 +1207,8 @@ const positionsLoading = ref(false);
 const transferMode = ref<"many-to-many" | "many-to-one">("many-to-many");
 const singleTargetAddress = ref("");
 const depositDelaySec = ref(0);
+const depositAmountMin = ref<number | null>(null);
+const depositAmountMax = ref<number | null>(null);
 const withdrawImportText = ref("");
 const withdrawMode = ref<"all" | "partial">("all");
 const withdrawAmount = ref<number | null>(null);
@@ -898,6 +1262,9 @@ const importLines = computed(() => {
 const totalWalletPages = computed(() => Math.max(1, Math.ceil(filteredWallets.value.length / walletPageSize.value)));
 const walletOffset = computed(() => (walletPage.value - 1) * walletPageSize.value);
 const visibleWallets = computed(() => filteredWallets.value.slice(walletOffset.value, walletOffset.value + walletPageSize.value));
+const walletsHeaderChecked = computed(
+  () => visibleWallets.value.length > 0 && visibleWallets.value.every((wallet) => wallet.selected)
+);
 
 watch([walletSearch, walletPageSize], () => {
   walletPage.value = 1;
@@ -919,11 +1286,37 @@ const sumBid = computed(() => {
   return Number(market.value.book.yesBids[0].price) + Number(market.value.book.noBids[0].price);
 });
 
+const fundHeaderChecked = computed(
+  () => fundRows.value.length > 0 && fundRows.value.every((row) => row.selected)
+);
+const withdrawHeaderChecked = computed(
+  () => withdrawRows.value.length > 0 && withdrawRows.value.every((row) => row.selected)
+);
+
 const sumHint = computed(() => {
   if (!market.value) return "请先加载市场";
   if (sumBid.value > 1) return "买一合计高于 1，可能存在磨损偏差";
   if (sumBid.value < 1) return "买一合计低于 1，可能存在磨损偏差";
   return "买一合计接近 1，请关注深度";
+});
+
+const sumAlert = computed(() => {
+  if (!market.value) return null;
+  const diff = Number((sumBid.value - 1).toFixed(3));
+  if (Math.abs(diff) < 0.001) return null;
+  const direction = diff > 0 ? "+" : "";
+  return {
+    message: `买一合计偏离 1（${direction}${diff}），注意差价`,
+    tone: diff > 0 ? "text-amber-700" : "text-rose-700",
+  };
+});
+
+const executionNotionalLabel = computed(() => {
+  if (!market.value) return "请先加载市场";
+  if (!execution.size || execution.size <= 0) return "请输入数量";
+  const perPair = execution.size * sumBid.value;
+  const total = perPair * selectedPairs.value.length;
+  return `${perPair.toFixed(2)} U / 对（总计 ${total.toFixed(2)} U）`;
 });
 
 const rebuildPairs = () => {
@@ -1022,27 +1415,111 @@ const seedWallets = (count = 20) => {
   rebuildFundRows();
 };
 
+
+const toggleWalletsHeader = () => {
+  const nextValue = !walletsHeaderChecked.value;
+  visibleWallets.value.forEach((wallet) => {
+    wallet.selected = nextValue;
+  });
+};
+
+const openHedgeDesk = () => {
+  currentPage.value = "hedge";
+  if (shouldShowPopup("hedgeGuide")) showHedgeGuide.value = true;
+};
+
+const openWallets = () => {
+  currentPage.value = "wallets";
+  if (shouldShowPopup("walletGuide")) showWalletGuide.value = true;
+};
+
+const openDeposit = () => {
+  currentPage.value = "deposit";
+  if (shouldShowPopup("depositGuide")) showDepositGuide.value = true;
+};
+
+const openWithdraw = () => {
+  currentPage.value = "withdraw";
+  if (shouldShowPopup("withdrawGuide")) showWithdrawGuide.value = true;
+};
+
+const openFlow = () => {
+  showFlow.value = true;
+};
+
+const openImport = () => {
+  showImport.value = true;
+};
+
+const openPairs = () => {
+  showPairs.value = true;
+};
+
+const openProxy = () => {
+  showProxy.value = true;
+};
+
+const openWithdrawConfig = () => {
+  showWithdrawConfig.value = true;
+};
+
 const refreshBalances = () => {
-  wallets.forEach((wallet) => {
+  const targets = wallets.filter((wallet) => wallet.selected);
+  if (targets.length === 0) {
+    pushLog("未选择钱包，无法查询余额。");
+    return;
+  }
+  targets.forEach((wallet) => {
     wallet.balance = Number((Math.random() * 220 + 20).toFixed(2));
   });
-  pushLog(`已更新 ${wallets.length} 个钱包余额`);
+  pushLog(`已更新 ${targets.length} 个钱包余额`);
 };
 
 const refreshFundBalances = () => {
-  fundRows.value.forEach((row) => {
+  const targets = fundRows.value.filter((row) => row.selected);
+  if (targets.length === 0) {
+    depositStatus.value = "未选择 Fund 地址，无法查询余额。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    return;
+  }
+  targets.forEach((row) => {
     row.balance = Number((Math.random() * 600 + 50).toFixed(2));
   });
-  depositStatus.value = `已更新 ${fundRows.value.length} 个 Fund 地址余额`;
+  depositStatus.value = `已更新 ${targets.length} 个 Fund 地址余额`;
   depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
 };
 
+const toggleFundHeader = () => {
+  const nextValue = !fundHeaderChecked.value;
+  fundRows.value.forEach((row) => {
+    row.selected = nextValue;
+  });
+};
+
 const refreshWithdrawBalances = () => {
-  withdrawRows.value.forEach((row) => {
+  const targets = withdrawRows.value.filter((row) => row.selected);
+  if (targets.length === 0) {
+    withdrawStatus.value = "未选择提现地址，无法查询余额。";
+    withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+    return;
+  }
+  targets.forEach((row) => {
     row.balance = Number((Math.random() * 600 + 50).toFixed(2));
   });
-  withdrawStatus.value = `已更新 ${withdrawRows.value.length} 个 Fund Address 余额`;
+  withdrawStatus.value = `已更新 ${targets.length} 个 Fund Address 余额`;
   withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+};
+
+const toggleWithdrawHeader = () => {
+  const nextValue = !withdrawHeaderChecked.value;
+  withdrawRows.value.forEach((row) => {
+    row.selected = nextValue;
+  });
+};
+
+const pickDepositAmount = (min: number, max: number) => {
+  if (max < min) return min;
+  return Number((min + Math.random() * (max - min)).toFixed(2));
 };
 
 const confirmDeposit = () => {
@@ -1052,12 +1529,26 @@ const confirmDeposit = () => {
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: "未选择 Fund 地址，无法开始。" });
     return;
   }
-  depositStatus.value = `开始执行交易所提现：${targets.length} 个地址，延迟 ${depositDelaySec.value}s`;
-  depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: `开始执行：${targets.length} 个地址，延迟 ${depositDelaySec.value}s` });
+  if (!depositAmountMin.value || !depositAmountMax.value || depositAmountMin.value <= 0 || depositAmountMax.value <= 0) {
+    depositStatus.value = "请填写有效的充值金额区间。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    return;
+  }
+  if (depositAmountMax.value < depositAmountMin.value) {
+    depositStatus.value = "充值金额区间上限不能小于下限。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    return;
+  }
+  depositStatus.value = `开始执行交易所提现：${targets.length} 个地址，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`;
+  depositLogs.value.push({
+    ts: new Date().toLocaleTimeString(),
+    message: `开始执行：${targets.length} 个地址，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`,
+  });
   targets.forEach((row, idx) => {
+    const amount = pickDepositAmount(depositAmountMin.value as number, depositAmountMax.value as number);
     depositLogs.value.push({
       ts: new Date().toLocaleTimeString(),
-      message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.fundAddress)} 已提交`,
+      message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.fundAddress)} 金额 ${amount} 已提交`,
     });
   });
 };
@@ -1144,6 +1635,12 @@ const applyWithdrawAddresses = () => {
     withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
   }
   showWithdrawConfig.value = false;
+};
+
+const selectAllPairs = (value: boolean) => {
+  pairs.forEach((pair) => {
+    pair.selected = value;
+  });
 };
 
 const exportKeys = () => {
