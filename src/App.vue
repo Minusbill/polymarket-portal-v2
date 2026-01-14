@@ -409,13 +409,13 @@
                 </table>
               </div>
 
-              <div class="mt-3 rounded-2xl border border-brand-100 bg-slate-950 p-3 text-xs text-slate-200 shadow-soft h-[160px]">
-                <div class="mb-2 flex items-center justify-between text-slate-400">
+              <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
+                <div class="mb-2 flex items-center justify-between text-brand-500">
                   <span>执行输出</span>
-                  <button class="text-xs text-slate-400 hover:text-slate-200" @click="clearDepositLogs">清空</button>
+                  <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearDepositLogs">清空</button>
                 </div>
                 <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
-                  <div v-if="depositLogs.length === 0" class="text-slate-500">暂无输出。</div>
+                  <div v-if="depositLogs.length === 0" class="text-brand-400">暂无输出。</div>
                   <div v-for="(log, idx) in depositLogs" :key="`${log.ts}-${idx}`">
                     [{{ log.ts }}] {{ log.message }}
                   </div>
