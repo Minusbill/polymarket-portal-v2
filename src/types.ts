@@ -18,6 +18,7 @@ export type WalletPair = {
   b: string;
   direction: "BUY" | "SELL";
   selected: boolean;
+  amount: number | null;
 };
 
 export type MarketInfo = {

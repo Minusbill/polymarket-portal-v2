@@ -193,17 +193,14 @@
               v-show="currentPage === 'hedge'"
               class="rounded-2xl border border-brand-100 bg-white p-3 shadow-card"
             >
-              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 class="font-display text-lg">对刷工作台</h2>
                   <p class="text-xs text-brand-500">加载市场 → 查看深度 → 统一参数 → 手动确认。</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="toggleRefresh">
-                    {{ autoRefresh ? '暂停刷新' : '继续刷新' }}
-                  </button>
                   <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="refreshMarket">
-                    模拟刷新
+                    刷新
                   </button>
                 </div>
               </div>
@@ -213,7 +210,7 @@
                   <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
                       <div class="text-xs text-brand-500">市场加载</div>
-                      <div class="text-xs text-brand-500">{{ autoRefresh ? '自动刷新中' : '暂停刷新' }}</div>
+                      <div class="text-xs text-brand-500">手动刷新</div>
                     </div>
                     <div class="mt-3 flex gap-2">
                       <input
@@ -224,14 +221,15 @@
                       <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="loadMarket">加载</button>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2">
-                      <button
-                        v-for="sample in marketSamples"
-                        :key="sample.slug"
+                      <a
+                        v-if="market?.slug"
                         class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600"
-                        @click="loadSampleMarket(sample.slug)"
+                        :href="`https://polymarket.com/event/${market.slug}`"
+                        target="_blank"
+                        rel="noreferrer"
                       >
-                        {{ sample.title }}
-                      </button>
+                        进入市场
+                      </a>
                     </div>
                   </div>
 
@@ -256,55 +254,104 @@
                   <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
                       <div class="text-xs text-brand-500">盘口深度</div>
-                      <div class="text-xs text-brand-500">买一合计 {{ sumBid.toFixed(3) }}</div>
+                      <div class="text-xs text-brand-500">{{ showSellOnly ? '卖一合计' : '买一合计' }} {{ (showSellOnly ? sumAsk : sumBid).toFixed(3) }}</div>
                     </div>
-                    <div class="mt-2 text-xs text-brand-600">{{ sumHint }}</div>
+                    <div class="mt-2 flex items-center justify-between text-xs text-brand-500">
+                      <span>{{ sumHint }}</span>
+                      <label class="flex items-center gap-2">
+                        <input type="checkbox" v-model="showSellOnly" />
+                        只显示卖单
+                      </label>
+                    </div>
                     <div v-if="sumAlert" class="mt-2 text-xs" :class="sumAlert.tone">
                       {{ sumAlert.message }}
+                    </div>
+                    <div v-if="orderBookStatus" class="mt-2 text-xs text-rose-700">
+                      {{ orderBookStatus }}
                     </div>
                   </div>
 
                   <div v-if="market" class="space-y-3 min-h-[360px]">
                     <div class="rounded-xl border border-brand-100 bg-white p-3">
                       <div class="text-xs text-brand-500">YES</div>
-                      <div class="mt-2 space-y-1 text-sm">
-                        <div class="flex items-center justify-between">
-                          <span>买一价格</span>
-                          <span class="font-semibold">{{ market.book.yesBids[0].price }}</span>
+                      <div class="mt-2 space-y-3 text-sm">
+                        <div v-if="!showSellOnly">
+                          <div
+                            v-for="(row, idx) in market.book.yesBids"
+                            :key="`yes-bid-${idx}`"
+                            class="relative mt-1 overflow-hidden rounded-md border border-emerald-100 bg-emerald-50/40 px-2 py-1 text-xs"
+                          >
+                            <div
+                            class="absolute inset-y-0 left-0 bg-emerald-300/80"
+                              :style="{ width: depthWidth(row.size, market.book.yesBids) }"
+                            ></div>
+                            <div class="relative flex items-center justify-between">
+                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
+                            <span class="text-brand-500">深度 {{ row.size }}</span>
+                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            </div>
+                          </div>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500">
-                          <span>买一深度</span>
-                          <span>{{ market.book.yesBids[0].size }}</span>
-                        </div>
-                        <div class="mt-2 flex items-center justify-between">
-                          <span>卖一价格</span>
-                          <span class="font-semibold">{{ market.book.yesAsks[0].price }}</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500">
-                          <span>卖一深度</span>
-                          <span>{{ market.book.yesAsks[0].size }}</span>
+                        <div>
+                          <div
+                            v-for="(row, idx) in market.book.yesAsks"
+                            :key="`yes-ask-${idx}`"
+                            class="relative mt-1 overflow-hidden rounded-md border border-rose-100 bg-rose-50/40 px-2 py-1 text-xs"
+                          >
+                            <div
+                            class="absolute inset-y-0 left-0 bg-rose-300/80"
+                              :style="{ width: depthWidth(row.size, market.book.yesAsks) }"
+                            ></div>
+                            <div class="relative flex items-center justify-between">
+                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
+                            <span class="text-brand-500">深度 {{ row.size }}</span>
+                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <div class="rounded-2xl border border-brand-100 bg-white p-3">
                       <div class="text-xs text-brand-500">NO</div>
-                      <div class="mt-2 space-y-1 text-sm">
-                        <div class="flex items-center justify-between">
-                          <span>买一价格</span>
-                          <span class="font-semibold">{{ market.book.noBids[0].price }}</span>
+                      <div class="mt-2 space-y-3 text-sm">
+                        <div v-if="!showSellOnly">
+                          <div
+                            v-for="(row, idx) in market.book.noBids"
+                            :key="`no-bid-${idx}`"
+                            class="relative mt-1 overflow-hidden rounded-md border border-emerald-100 bg-emerald-50/40 px-2 py-1 text-xs"
+                          >
+                            <div
+                            class="absolute inset-y-0 left-0 bg-emerald-300/80"
+                              :style="{ width: depthWidth(row.size, market.book.noBids) }"
+                            ></div>
+                            <div class="relative flex items-center justify-between">
+                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
+                            <span class="text-brand-500">深度 {{ row.size }}</span>
+                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            </div>
+                          </div>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500">
-                          <span>买一深度</span>
-                          <span>{{ market.book.noBids[0].size }}</span>
-                        </div>
-                        <div class="mt-2 flex items-center justify-between">
-                          <span>卖一价格</span>
-                          <span class="font-semibold">{{ market.book.noAsks[0].price }}</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs text-brand-500">
-                          <span>卖一深度</span>
-                          <span>{{ market.book.noAsks[0].size }}</span>
+                        <div>
+                          <div
+                            v-for="(row, idx) in market.book.noAsks"
+                            :key="`no-ask-${idx}`"
+                            class="relative mt-1 overflow-hidden rounded-md border border-rose-100 bg-rose-50/40 px-2 py-1 text-xs"
+                          >
+                            <div
+                            class="absolute inset-y-0 left-0 bg-rose-300/80"
+                              :style="{ width: depthWidth(row.size, market.book.noAsks) }"
+                            ></div>
+                            <div class="relative flex items-center justify-between">
+                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
+                            <span class="text-brand-500">深度 {{ row.size }}</span>
+                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -323,33 +370,66 @@
                 <div class="mt-3 rounded-xl border border-brand-100 bg-white p-2 text-xs">
                   <div v-if="pairs.length === 0" class="px-2 py-3 text-brand-500">暂无钱包对。</div>
                   <div v-else class="grid gap-2 md:grid-cols-4">
-                    <label
+                    <div
                       v-for="pair in pairs"
                       :key="pair.id"
                       class="flex items-center justify-between rounded-lg border border-brand-100 px-2 py-1 text-[11px]"
                     >
-                      <span class="text-brand-700">{{ pair.name }}</span>
-                      <input type="checkbox" v-model="pair.selected" />
-                    </label>
+                      <label class="flex items-center gap-2">
+                        <input type="checkbox" v-model="pair.selected" />
+                        <span class="text-brand-700">{{ pair.name }}</span>
+                      </label>
+                      <div class="flex items-center gap-1">
+                        <span class="rounded-full border border-brand-200 px-2 py-0.5 text-[10px] text-brand-600">
+                          {{ pair.amount && pair.amount > 0 ? `单独 ${pair.amount}` : "统一" }}
+                        </span>
+                        <button class="rounded-md border border-brand-200 px-2 py-0.5 text-[10px] text-brand-600" @click="openPairConfig(pair)">
+                          配置
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="mt-3 flex flex-wrap items-center gap-3">
-                  <div class="rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs text-brand-600">
-                    执行模式：对冲单次执行（YES/NO）
+                <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_auto]">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <div class="rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs text-brand-600">
+                      执行模式：对冲单次执行（YES/NO）
+                    </div>
+                    <div class="flex items-center gap-2 rounded-lg border border-brand-100 bg-white px-2 py-1 text-xs text-brand-600">
+                      <label class="flex items-center gap-1">
+                        <input type="radio" value="yes-no" v-model="executionOrder" />
+                        先 YES 后 NO
+                      </label>
+                      <label class="flex items-center gap-1">
+                        <input type="radio" value="no-yes" v-model="executionOrder" />
+                        先 NO 后 YES
+                      </label>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-lg border border-brand-100 bg-white px-2 py-1 text-xs text-brand-600">
+                      <span>随机间隔(秒)</span>
+                      <input v-model.number="executionDelayMin" type="number" min="0" class="w-14 rounded-md border border-brand-200 px-2 py-1 text-xs" placeholder="最小" />
+                      <span class="text-brand-400">-</span>
+                      <input v-model.number="executionDelayMax" type="number" min="0" class="w-14 rounded-md border border-brand-200 px-2 py-1 text-xs" placeholder="最大" />
+                    </div>
+                    <div class="flex items-center gap-2 rounded-lg border border-brand-100 bg-white px-2 py-1 text-xs text-brand-600">
+                      <span>统一数量</span>
+                      <input v-model.number="execution.size" type="number" min="0" class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs" />
+                      <span v-if="customPairCount" class="text-brand-400">已配置 {{ customPairCount }} 对单独数量</span>
+                    </div>
+                    <div class="text-xs text-brand-500">
+                      预计交易价值：{{ executionNotionalLabel }}
+                    </div>
                   </div>
-                  <label class="text-xs text-brand-500">统一数量</label>
-                  <input v-model.number="execution.size" type="number" min="0" class="w-24 rounded-lg border border-brand-200 px-3 py-2 text-sm" />
-                  <div class="text-xs text-brand-500">
-                    预计交易价值：{{ executionNotionalLabel }}
+                  <div class="flex items-center gap-2">
+                    <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="execute">执行确定</button>
+                    <button
+                      class="flex h-8 w-8 items-center justify-center rounded-full border border-brand-200 text-xs text-brand-500 hover:text-brand-800"
+                      @click="showExecutionNotice = !showExecutionNotice"
+                      title="执行说明"
+                    >
+                      !
+                    </button>
                   </div>
-                  <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="execute">执行确定</button>
-                  <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full border border-brand-200 text-xs text-brand-500 hover:text-brand-800"
-                    @click="showExecutionNotice = !showExecutionNotice"
-                    title="执行说明"
-                  >
-                    !
-                  </button>
                 </div>
                 <div
                   v-if="showExecutionNotice"
@@ -1043,6 +1123,35 @@
     </div>
   </div>
 
+  <div v-if="showPairConfig" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showPairConfig = false">
+    <div class="w-full max-w-md rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">钱包对数量配置</h2>
+        <button class="text-sm text-brand-500" @click="showPairConfig = false">关闭</button>
+      </div>
+      <div class="mt-2 text-xs text-brand-500">
+        {{ pairConfigTarget ? pairConfigTarget.name : "-" }}：{{ pairConfigTarget ? `${nameForWallet(pairConfigTarget.a)} / ${nameForWallet(pairConfigTarget.b)}` : "-" }}
+      </div>
+      <div class="mt-4 space-y-2">
+        <input
+          v-model.number="pairConfigAmount"
+          type="number"
+          min="0"
+          class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          placeholder="单独数量（留空使用统一数量）"
+        />
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showPairConfig = false">
+          取消
+        </button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="savePairConfig">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div v-if="showPairs" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showPairs = false">
     <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
@@ -1125,7 +1234,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import type { ExecutionPlan, LogEntry, MarketInfo, PositionRow, Wallet, WalletPair } from "./types";
 import { makeMockMarket, makeMockPositions, makeMockWallets } from "./data/mock";
 import { maskAddress, parseSlug } from "./utils";
@@ -1145,7 +1254,6 @@ const showWalletGuide = ref(false);
 const showDepositGuide = ref(false);
 const showWithdrawGuide = ref(false);
 const showIntro = ref(false);
-const autoRefresh = ref(true);
 const useProxy = ref(true);
 const darkMode = ref(false);
 const currentPage = ref<"wallets" | "hedge" | "positions" | "deposit" | "withdraw">("wallets");
@@ -1183,11 +1291,7 @@ const applyWalletIpCache = () => {
   });
 };
 
-const marketSamples = [
-  { slug: "nba-lal-bos-2026-01-08", title: "NBA 湖人 vs 凯尔特人" },
-  { slug: "epl-ars-liv-2026-01-08", title: "英超 阿森纳 vs 利物浦" },
-  { slug: "crypto-eth-2026-06-30", title: "ETH 价格预测" },
-];
+const marketSamples = [];
 
 const flowSteps = [
   { title: "导入账户", desc: "在钱包管理中导入私钥或 CSV，确保钱包为双数并完成基础校验。" },
@@ -1211,10 +1315,18 @@ const positions = ref<PositionRow[]>([]);
 const positionsLoading = ref(false);
 const transferMode = ref<"many-to-many" | "many-to-one">("many-to-many");
 const singleTargetAddress = ref("");
+const orderBookStatus = ref("");
+const showSellOnly = ref(true);
 const showWalletIpModal = ref(false);
 const walletIpTarget = ref<Wallet | null>(null);
 const walletIpName = ref("");
 const walletIpEndpoint = ref("");
+const executionOrder = ref<"yes-no" | "no-yes">("yes-no");
+const executionDelayMin = ref<number | null>(null);
+const executionDelayMax = ref<number | null>(null);
+const showPairConfig = ref(false);
+const pairConfigTarget = ref<WalletPair | null>(null);
+const pairConfigAmount = ref<number | null>(null);
 const depositDelaySec = ref(0);
 const depositAmountMin = ref<number | null>(null);
 const depositAmountMax = ref<number | null>(null);
@@ -1308,6 +1420,7 @@ watch(
 );
 
 const selectedPairs = computed(() => pairs.filter((p) => p.selected));
+const customPairCount = computed(() => pairs.filter((p) => p.amount && p.amount > 0).length);
 
 const pairNameForWallet = (walletId: string) => {
   const match = pairs.find((p) => p.a === walletId || p.b === walletId);
@@ -1316,7 +1429,12 @@ const pairNameForWallet = (walletId: string) => {
 
 const sumBid = computed(() => {
   if (!market.value) return 0;
-  return Number(market.value.book.yesBids[0].price) + Number(market.value.book.noBids[0].price);
+  return Number(market.value.book.yesBids[0]?.price || 0) + Number(market.value.book.noBids[0]?.price || 0);
+});
+
+const sumAsk = computed(() => {
+  if (!market.value) return 0;
+  return Number(market.value.book.yesAsks[0]?.price || 0) + Number(market.value.book.noAsks[0]?.price || 0);
 });
 
 const fundHeaderChecked = computed(
@@ -1328,18 +1446,19 @@ const withdrawHeaderChecked = computed(
 
 const sumHint = computed(() => {
   if (!market.value) return "请先加载市场";
-  if (sumBid.value > 1) return "买一合计高于 1，可能存在磨损偏差";
-  if (sumBid.value < 1) return "买一合计低于 1，可能存在磨损偏差";
-  return "买一合计接近 1，请关注深度";
+  const value = showSellOnly.value ? sumAsk.value : sumBid.value;
+  if (value > 1) return "合计高于 1，可能存在磨损偏差";
+  if (value < 1) return "合计低于 1，可能存在磨损偏差";
+  return "合计接近 1，请关注深度";
 });
 
 const sumAlert = computed(() => {
   if (!market.value) return null;
-  const diff = Number((sumBid.value - 1).toFixed(3));
+  const diff = Number(((showSellOnly.value ? sumAsk.value : sumBid.value) - 1).toFixed(3));
   if (Math.abs(diff) < 0.001) return null;
   const direction = diff > 0 ? "+" : "";
   return {
-    message: `买一合计偏离 1（${direction}${diff}），注意差价`,
+    message: `合计偏离 1（${direction}${diff}），注意差价`,
     tone: diff > 0 ? "text-amber-700" : "text-rose-700",
   };
 });
@@ -1347,10 +1466,28 @@ const sumAlert = computed(() => {
 const executionNotionalLabel = computed(() => {
   if (!market.value) return "请先加载市场";
   if (!execution.size || execution.size <= 0) return "请输入数量";
-  const perPair = execution.size * sumBid.value;
-  const total = perPair * selectedPairs.value.length;
-  return `${perPair.toFixed(2)} U / 对（总计 ${total.toFixed(2)} U）`;
+  const perPairDefault = execution.size * (market.value.yesPrice + market.value.noPrice);
+  const total = selectedPairs.value.reduce((acc, pair) => {
+    const size = pair.amount && pair.amount > 0 ? pair.amount : execution.size;
+    return acc + size * (market.value.yesPrice + market.value.noPrice);
+  }, 0);
+  return `${perPairDefault.toFixed(2)} U / 对（总计 ${total.toFixed(2)} U）`;
 });
+
+const formatU = (price: number, size: number) => {
+  const value = Number(price) * Number(size);
+  if (!Number.isFinite(value)) return "-";
+  return value.toFixed(2);
+};
+
+const depthWidth = (size: number, rows: Array<{ price: number; size: number }>) => {
+  const maxSize = rows.reduce((acc, row) => Math.max(acc, Number(row.size) || 0), 0);
+  if (!maxSize) return "0%";
+  const ratio = Math.min(1, (Number(size) || 0) / maxSize);
+  return `${(ratio * 100).toFixed(2)}%`;
+};
+
+const marketTokenIds = ref<{ yes: string | null; no: string | null }>({ yes: null, no: null });
 
 const rebuildPairs = () => {
   pairs.splice(0, pairs.length);
@@ -1365,6 +1502,7 @@ const rebuildPairs = () => {
       b: b.id,
       direction: "BUY",
       selected: true,
+      amount: null,
     });
   }
 };
@@ -1466,6 +1604,18 @@ const toggleWalletsHeader = () => {
   visibleWallets.value.forEach((wallet) => {
     wallet.selected = nextValue;
   });
+};
+
+const openPairConfig = (pair: WalletPair) => {
+  pairConfigTarget.value = pair;
+  pairConfigAmount.value = pair.amount;
+  showPairConfig.value = true;
+};
+
+const savePairConfig = () => {
+  if (!pairConfigTarget.value) return;
+  pairConfigTarget.value.amount = pairConfigAmount.value && pairConfigAmount.value > 0 ? pairConfigAmount.value : null;
+  showPairConfig.value = false;
 };
 
 const openWalletIp = (wallet: Wallet) => {
@@ -1720,56 +1870,162 @@ const exportKeys = () => {
   pushLog("已导出钱包信息 CSV。");
 };
 
-const loadMarket = () => {
-  const slug = parseSlug(marketInput.value);
-  const selected = marketSamples.find((item) => item.slug === slug);
-  market.value = makeMockMarket(slug || "demo");
-  if (market.value && selected) {
-    market.value.title = selected.title;
-  }
-  if (autoRefresh.value) refreshMarket();
-};
-
-const loadSampleMarket = (slug: string) => {
-  marketInput.value = slug;
-  loadMarket();
-};
-
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-const jitter = (value: number, range: number) => value + (Math.random() - 0.5) * range;
 
-const refreshMarket = () => {
-  if (!market.value) return;
-  const yesBid = clamp(jitter(market.value.book.yesBids[0].price, 0.04), 0.05, 0.95);
-  const noBid = clamp(jitter(1 - yesBid, 0.06), 0.05, 0.95);
-  const yesAsk = clamp(yesBid + 0.02 + Math.random() * 0.01, yesBid + 0.01, 0.99);
-  const noAsk = clamp(noBid + 0.02 + Math.random() * 0.01, noBid + 0.01, 0.99);
+const parseTokenIds = (raw: any) => {
+  if (Array.isArray(raw?.clobTokenIds)) {
+    return { yes: raw.clobTokenIds[0] || null, no: raw.clobTokenIds[1] || null };
+  }
+  if (typeof raw?.clobTokenIds === "string") {
+    try {
+      const parsed = JSON.parse(raw.clobTokenIds);
+      if (Array.isArray(parsed)) {
+        return { yes: parsed[0] || null, no: parsed[1] || null };
+      }
+    } catch {
+      return { yes: null, no: null };
+    }
+  }
+  return { yes: null, no: null };
+};
 
-  market.value = {
-    ...market.value,
+const normalizePrice = (value: number | null | undefined, fallback: number) => {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0 || num >= 1) return fallback;
+  return num;
+};
+
+const mapMarket = (raw: any, slug: string): MarketInfo => {
+  const title = raw?.question || raw?.title || slug;
+  const outcomes = (() => {
+    if (Array.isArray(raw?.outcomes)) return raw.outcomes;
+    if (typeof raw?.outcomes === "string") {
+      try {
+        const parsed = JSON.parse(raw.outcomes);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return ["YES", "NO"];
+      }
+    }
+    return ["YES", "NO"];
+  })();
+  const outcomePrices = (() => {
+    if (Array.isArray(raw?.outcomePrices)) return raw.outcomePrices;
+    if (typeof raw?.outcomePrices === "string") {
+      try {
+        const parsed = JSON.parse(raw.outcomePrices);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  })();
+  const rawYes = normalizePrice(outcomePrices?.[0] ?? raw?.bestBid ?? raw?.lastTradePrice, 0.5);
+  const rawNo = normalizePrice(outcomePrices?.[1] ?? 1 - rawYes, 0.5);
+  const yesBid = clamp(rawYes, 0.01, 0.99);
+  const noBid = clamp(rawNo, 0.01, 0.99);
+  const yesAsk = clamp(normalizePrice(raw?.bestAsk ?? yesBid, yesBid), yesBid, 0.99);
+  const noAsk = clamp(normalizePrice(rawNo, noBid), noBid, 0.99);
+  const resolved = Boolean(raw?.resolved || raw?.closed || raw?.status === "resolved");
+  return {
+    slug: raw?.slug || slug,
+    title,
+    status: resolved ? "RESOLVED" : "OPEN",
     yesPrice: Number(yesBid.toFixed(3)),
     noPrice: Number(noBid.toFixed(3)),
-    updatedAt: new Date().toLocaleTimeString(),
+    updatedAt: raw?.updatedAt || raw?.updated_at || new Date().toLocaleString(),
+    outcomes: outcomes.length === 2 ? outcomes : ["YES", "NO"],
     book: {
-      yesBids: [{ price: Number(yesBid.toFixed(3)), size: Number((900 + Math.random() * 2200).toFixed(0)) }],
-      yesAsks: [{ price: Number(yesAsk.toFixed(3)), size: Number((700 + Math.random() * 1600).toFixed(0)) }],
-      noBids: [{ price: Number(noBid.toFixed(3)), size: Number((900 + Math.random() * 2200).toFixed(0)) }],
-      noAsks: [{ price: Number(noAsk.toFixed(3)), size: Number((700 + Math.random() * 1600).toFixed(0)) }],
+      yesBids: [],
+      yesAsks: [],
+      noBids: [],
+      noAsks: [],
     },
   };
 };
 
-let refreshTimer: number | undefined;
-const startRefreshTimer = () => {
-  if (refreshTimer) return;
-  refreshTimer = window.setInterval(() => {
-    if (autoRefresh.value) refreshMarket();
-  }, 5000);
+const fetchMarketBySlug = async (slug: string) => {
+  const response = await fetch(`/api/market?slug=${encodeURIComponent(slug)}`);
+  if (!response.ok) throw new Error("API 请求失败");
+  const data = await response.json();
+  const raw = Array.isArray(data) ? data[0] : data;
+  if (!raw) throw new Error("未找到市场数据");
+  return { market: mapMarket(raw, slug), tokenIds: parseTokenIds(raw) };
 };
 
-const toggleRefresh = () => {
-  autoRefresh.value = !autoRefresh.value;
-  if (autoRefresh.value) refreshMarket();
+const fetchOrderBook = async (tokenId: string) => {
+  const response = await fetch(`/api/book?token_id=${encodeURIComponent(tokenId)}`);
+  if (!response.ok) throw new Error("订单簿请求失败");
+  const data = await response.json();
+  return {
+    bids: Array.isArray(data?.bids) ? data.bids : [],
+    asks: Array.isArray(data?.asks) ? data.asks : [],
+  };
+};
+
+const applyOrderBooks = async (tokenIds: { yes: string | null; no: string | null }) => {
+  if (!market.value) return;
+  if (!tokenIds.yes || !tokenIds.no) {
+    orderBookStatus.value = "订单簿 token_id 缺失，无法加载深度。";
+    return;
+  }
+  try {
+    const [yesBook, noBook] = await Promise.all([fetchOrderBook(tokenIds.yes), fetchOrderBook(tokenIds.no)]);
+    const topThree = (list: Array<{ price: string; size: string }> | undefined) =>
+      list && list.length
+        ? list.slice(-3).reverse().map((item) => ({ price: Number(item.price), size: Number(item.size) }))
+        : [];
+    market.value = {
+      ...market.value,
+      updatedAt: new Date().toLocaleString(),
+      book: {
+        yesBids: topThree(yesBook.bids),
+        yesAsks: topThree(yesBook.asks),
+        noBids: topThree(noBook.bids),
+        noAsks: topThree(noBook.asks),
+      },
+    };
+    orderBookStatus.value = "";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    orderBookStatus.value = `订单簿加载失败：${message}`;
+    pushLog(orderBookStatus.value);
+    console.error("Order book fetch failed:", error);
+  }
+};
+
+const loadMarket = async () => {
+  const slug = parseSlug(marketInput.value);
+  if (!slug) {
+    pushLog("请输入有效的市场 slug 或链接。");
+    return;
+  }
+  try {
+    const result = await fetchMarketBySlug(slug);
+    market.value = result.market;
+    marketTokenIds.value = result.tokenIds;
+    marketInput.value = slug;
+    orderBookStatus.value = "";
+    await applyOrderBooks(result.tokenIds);
+  } catch (error) {
+    pushLog("市场加载失败，请检查 slug 或稍后重试。");
+  }
+};
+
+const refreshMarket = async () => {
+  if (!marketInput.value) return;
+  const slug = parseSlug(marketInput.value);
+  if (!slug) return;
+  try {
+    const result = await fetchMarketBySlug(slug);
+    market.value = result.market;
+    marketTokenIds.value = result.tokenIds;
+    orderBookStatus.value = "";
+    await applyOrderBooks(result.tokenIds);
+  } catch {
+    pushLog("刷新失败，请稍后重试。");
+  }
 };
 
 const pushLog = (message: string) => {
@@ -1788,9 +2044,25 @@ const execute = () => {
     pushLog("未选择钱包对，执行终止。");
     return;
   }
-  pushLog(`开始执行 ${selectedPairs.value.length} 个钱包对，模式对冲单次执行，数量 ${execution.size}`);
-  selectedPairs.value.forEach((pair) => {
-    pushLog(`${pair.name}：${nameForWallet(pair.a)} / ${nameForWallet(pair.b)} 执行成功`);
+  const delayMin = executionDelayMin.value ?? 0;
+  const delayMax = executionDelayMax.value ?? 0;
+  if (delayMax < delayMin) {
+    pushLog("随机间隔上限不能小于下限。");
+    return;
+  }
+  const orderLabel = executionOrder.value === "yes-no" ? "先 YES 后 NO" : "先 NO 后 YES";
+  pushLog(
+    `开始执行 ${selectedPairs.value.length} 个钱包对，数量 ${execution.size}，${orderLabel}，随机间隔 ${delayMin}-${delayMax}s`
+  );
+  selectedPairs.value.forEach((pair, idx) => {
+    const size = pair.amount && pair.amount > 0 ? pair.amount : execution.size;
+    const delay =
+      delayMax > delayMin
+        ? Number((delayMin + Math.random() * (delayMax - delayMin)).toFixed(2))
+        : delayMin;
+    pushLog(
+      `${pair.name}：${nameForWallet(pair.a)} / ${nameForWallet(pair.b)} 数量 ${size}，间隔 ${delay}s，${orderLabel} 已提交`
+    );
   });
   pushLog("执行完成。");
 };
@@ -1815,9 +2087,4 @@ const clearPositions = () => {
 const redeemAll = () => {};
 
 rebuildPairs();
-startRefreshTimer();
-
-onBeforeUnmount(() => {
-  if (refreshTimer) window.clearInterval(refreshTimer);
-});
 </script>
