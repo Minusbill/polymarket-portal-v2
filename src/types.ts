@@ -5,7 +5,8 @@ export type Wallet = {
   privateKey?: string;
   balance: number | null;
   enabled: boolean;
-  profileId: string;
+  ipName: string;
+  ipEndpoint: string;
   volume: number;
   selected: boolean;
 };

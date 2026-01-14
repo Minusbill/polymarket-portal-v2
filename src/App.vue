@@ -84,7 +84,7 @@
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="exportKeys"
                 >
-                  导出私钥
+                  导出钱包信息
                 </button>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
@@ -96,12 +96,6 @@
                   <input type="checkbox" v-model="useProxy" />
                   使用 IP 代理
                 </label>
-                <button
-                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
-                  @click="openProxy"
-                >
-                  IP 配置
-                </button>
                 <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="seedWallets(100)">
                   加载 100 个
                 </button>
@@ -159,9 +153,14 @@
                       <td class="px-3 py-2">{{ w.balance === null ? "-" : w.balance.toFixed(2) }}</td>
                       <td class="px-3 py-2 text-xs text-brand-500">{{ pairNameForWallet(w.id) }}</td>
                       <td v-if="useProxy" class="px-3 py-2">
-                        <select v-model="w.profileId" class="w-full rounded-lg border border-brand-200 px-2 py-1 text-xs">
-                          <option v-for="profile in ipProfiles" :key="profile.id" :value="profile.id">{{ profile.name }}</option>
-                        </select>
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="text-xs text-brand-500">
+                            {{ w.ipName || w.ipEndpoint ? w.ipName || "已配置" : "未配置" }}
+                          </div>
+                          <button class="rounded-md border border-brand-200 px-2 py-1 text-[11px] text-brand-700" @click="openWalletIp(w)">
+                            配置
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -698,7 +697,7 @@
           <input type="file" accept=".csv,text/csv" class="hidden" @change="handleCsvImport" />
           选择 CSV 文件
         </label>
-        <span class="text-brand-700">CSV 格式：privateKey 或 index,privateKey（无需标题行）</span>
+        <span class="text-brand-700">CSV 格式：privateKey,ipName,ipEndpoint（含表头）</span>
       </div>
       <div class="mt-4 relative">
         <div class="pointer-events-none absolute inset-y-2 left-2 w-10 overflow-hidden text-xs text-brand-500">
@@ -709,15 +708,12 @@
         <textarea
           v-model="importText"
           class="h-40 w-full rounded-xl border border-brand-200 p-3 pl-12 text-sm leading-5"
-          placeholder="每行一个私钥，或 CSV：index,privateKey"
+          placeholder="每行一个私钥，或 CSV：privateKey,ipName,ipEndpoint（含表头）"
         ></textarea>
       </div>
-      <div class="mt-4 flex justify-between gap-2">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('import'); showImport = false">今天内不再显示</button>
-        <div class="flex gap-2">
+      <div class="mt-4 flex justify-end gap-2">
         <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showImport = false">取消</button>
         <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="confirmImport">导入</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1015,6 +1011,38 @@
     </div>
   </div>
 
+  <div v-if="showWalletIpModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWalletIpModal = false">
+    <div class="w-full max-w-lg rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-lg text-brand-900">钱包 IP 配置</h2>
+        <button class="text-sm text-brand-500" @click="showWalletIpModal = false">关闭</button>
+      </div>
+      <div class="mt-2 text-xs text-brand-500">
+        地址：{{ walletIpTarget ? maskAddress(walletIpTarget.address) : "-" }}
+      </div>
+      <div class="mt-4 space-y-3">
+        <input
+          v-model="walletIpName"
+          class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          placeholder="IP 名称"
+        />
+        <input
+          v-model="walletIpEndpoint"
+          class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          placeholder="http://user:pass@host:port"
+        />
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWalletIpModal = false">
+          取消
+        </button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="saveWalletIp">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div v-if="showPairs" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showPairs = false">
     <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
@@ -1039,39 +1067,10 @@
           </div>
         </div>
       </div>
-      <div class="mt-4 flex items-center justify-between">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('pairs'); showPairs = false">今天内不再显示</button>
+      <div class="mt-4 flex items-center justify-end">
         <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showPairs = false">
           关闭
         </button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showProxy" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showProxy = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">IP 代理配置</h2>
-        <button class="text-sm text-brand-500" @click="showProxy = false">关闭</button>
-      </div>
-      <p class="mt-2 text-xs text-brand-500">为账户配置代理地址，选择后会关联到钱包。</p>
-      <div class="mt-4 space-y-2">
-        <div v-for="profile in ipProfiles" :key="profile.id" class="grid items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm md:grid-cols-[140px_1fr_100px]">
-          <input v-model="profile.name" class="rounded-lg border border-brand-200 px-2 py-1 text-sm" placeholder="名称" />
-          <input v-model="profile.endpoint" class="rounded-lg border border-brand-200 px-2 py-1 text-sm" placeholder="http://user:pass@host:port" />
-          <button class="rounded-lg border border-brand-200 px-2 py-1 text-xs text-brand-700" @click="copyEndpoint(profile.endpoint)">
-            复制
-          </button>
-        </div>
-      </div>
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('proxy'); showProxy = false">今天内不再显示</button>
-        <div class="flex gap-2">
-          <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="addProxyProfile">
-            新增配置
-          </button>
-          <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showProxy = false">完成</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1113,16 +1112,13 @@
           />
         </div>
       </div>
-      <div class="mt-4 flex items-center justify-between gap-2">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('withdrawConfig'); showWithdrawConfig = false">今天内不再显示</button>
-        <div class="flex gap-2">
-          <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
-            取消
-          </button>
-          <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
-            应用配置
-          </button>
-        </div>
+      <div class="mt-4 flex items-center justify-end gap-2">
+        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
+          取消
+        </button>
+        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
+          应用配置
+        </button>
       </div>
     </div>
   </div>
@@ -1142,7 +1138,6 @@ const importText = ref("");
 const showImport = ref(false);
 const showPairs = ref(false);
 const showFlow = ref(false);
-const showProxy = ref(false);
 const showWithdrawConfig = ref(false);
 const showExecutionNotice = ref(false);
 const showHedgeGuide = ref(false);
@@ -1171,12 +1166,22 @@ if (shouldShowPopup("intro")) {
   showIntro.value = true;
 }
 
-const ipProfiles = reactive([
-  { id: "auto", name: "自动", endpoint: "" },
-  { id: "proxy-01", name: "proxy-01", endpoint: "http://127.0.0.1:8080" },
-  { id: "proxy-02", name: "proxy-02", endpoint: "http://127.0.0.1:8081" },
-  { id: "proxy-03", name: "proxy-03", endpoint: "http://127.0.0.1:8082" },
-]);
+const readWalletIpCache = () => {
+  if (typeof window === "undefined") return {} as Record<string, { name: string; endpoint: string }>;
+  const mapRaw = localStorage.getItem("walletIpMap");
+  return mapRaw ? (JSON.parse(mapRaw) as Record<string, { name: string; endpoint: string }>) : {};
+};
+
+const applyWalletIpCache = () => {
+  const cached = readWalletIpCache();
+  wallets.forEach((wallet) => {
+    const entry = cached[wallet.address];
+    if (entry && !wallet.ipName && !wallet.ipEndpoint) {
+      wallet.ipName = entry.name || "";
+      wallet.ipEndpoint = entry.endpoint || "";
+    }
+  });
+};
 
 const marketSamples = [
   { slug: "nba-lal-bos-2026-01-08", title: "NBA 湖人 vs 凯尔特人" },
@@ -1206,6 +1211,10 @@ const positions = ref<PositionRow[]>([]);
 const positionsLoading = ref(false);
 const transferMode = ref<"many-to-many" | "many-to-one">("many-to-many");
 const singleTargetAddress = ref("");
+const showWalletIpModal = ref(false);
+const walletIpTarget = ref<Wallet | null>(null);
+const walletIpName = ref("");
+const walletIpEndpoint = ref("");
 const depositDelaySec = ref(0);
 const depositAmountMin = ref<number | null>(null);
 const depositAmountMax = ref<number | null>(null);
@@ -1222,6 +1231,11 @@ const depositStatus = ref("");
 const depositLogs = ref<LogEntry[]>([]);
 const withdrawStatus = ref("");
 const withdrawLogs = ref<LogEntry[]>([]);
+const defaultProxyEndpoints = [
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:8081",
+  "http://127.0.0.1:8082",
+];
 const fundRows = ref(
   wallets.map((wallet, idx) => ({
     id: `fund-${idx + 1}`,
@@ -1259,6 +1273,10 @@ const importLines = computed(() => {
   return lines.length ? lines : [""];
 });
 
+if (typeof window !== "undefined") {
+  applyWalletIpCache();
+}
+
 const totalWalletPages = computed(() => Math.max(1, Math.ceil(filteredWallets.value.length / walletPageSize.value)));
 const walletOffset = computed(() => (walletPage.value - 1) * walletPageSize.value);
 const visibleWallets = computed(() => filteredWallets.value.slice(walletOffset.value, walletOffset.value + walletPageSize.value));
@@ -1273,6 +1291,21 @@ watch([walletSearch, walletPageSize], () => {
 watch(totalWalletPages, (value) => {
   if (walletPage.value > value) walletPage.value = value;
 });
+
+watch(
+  wallets,
+  (list) => {
+    if (typeof window === "undefined") return;
+    const map = list.reduce<Record<string, { name: string; endpoint: string }>>((acc, wallet) => {
+      if (wallet.ipName || wallet.ipEndpoint) {
+        acc[wallet.address] = { name: wallet.ipName || "", endpoint: wallet.ipEndpoint || "" };
+      }
+      return acc;
+    }, {});
+    localStorage.setItem("walletIpMap", JSON.stringify(map));
+  },
+  { deep: true }
+);
 
 const selectedPairs = computed(() => pairs.filter((p) => p.selected));
 
@@ -1357,21 +1390,35 @@ const rebuildFundRows = () => {
 
 const nameForWallet = (id: string) => wallets.find((w) => w.id === id)?.nickname || "-";
 
+const buildDefaultIp = (idx: number) => {
+  const endpoint = defaultProxyEndpoints[idx % defaultProxyEndpoints.length] || "";
+  const name = `proxy-${String((idx % defaultProxyEndpoints.length) + 1).padStart(2, "0")}`;
+  return { name, endpoint };
+};
+
 const confirmImport = () => {
   const lines = importText.value
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
+  const header = lines[0]?.toLowerCase() || "";
+  const dataLines = header.includes("privatekey") ? lines.slice(1) : lines;
   wallets.splice(0, wallets.length);
-  lines.forEach((line, idx) => {
+  dataLines.forEach((line, idx) => {
+    const parts = line.split(",").map((part) => part.trim());
+    const key = parts[0] || "";
+    const ipNameRaw = parts[1] || "";
+    const ipEndpointRaw = parts.slice(2).join(",");
+    const defaults = !ipNameRaw && !ipEndpointRaw ? buildDefaultIp(idx) : null;
     wallets.push({
       id: `w-${idx + 1}`,
       nickname: `Wallet ${idx + 1}`,
-      address: `0x${line.slice(0, 4)}...${line.slice(-4)}`,
-      privateKey: line,
+      address: `0x${key.slice(0, 4)}...${key.slice(-4)}`,
+      privateKey: key,
       balance: null,
       enabled: true,
-      profileId: ipProfiles[idx % ipProfiles.length].id,
+      ipName: defaults ? defaults.name : ipNameRaw,
+      ipEndpoint: defaults ? defaults.endpoint : ipEndpointRaw,
       volume: Number((Math.random() * 5200).toFixed(2)),
       selected: true,
     });
@@ -1379,6 +1426,7 @@ const confirmImport = () => {
   rebuildPairs();
   rebuildFundRows();
   showImport.value = false;
+  applyWalletIpCache();
 };
 
 const handleCsvImport = async (event: Event) => {
@@ -1388,15 +1436,7 @@ const handleCsvImport = async (event: Event) => {
   const text = await file.text();
   const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (rows.length === 0) return;
-  const dataRows = rows;
-  importText.value = dataRows
-    .map((row) => {
-      const parts = row.split(",");
-      const key = (parts.length === 1 ? parts[0] : parts[1])?.trim();
-      return key || "";
-    })
-    .filter(Boolean)
-    .join("\n");
+  importText.value = rows.join("\n");
   target.value = "";
 };
 
@@ -1409,10 +1449,15 @@ const clearWallets = () => {
 const seedWallets = (count = 20) => {
   wallets.splice(0, wallets.length, ...makeMockWallets(count));
   wallets.forEach((wallet, idx) => {
-    wallet.profileId = ipProfiles[idx % ipProfiles.length].id;
+    if (!wallet.ipName && !wallet.ipEndpoint) {
+      const defaults = buildDefaultIp(idx);
+      wallet.ipName = defaults.name;
+      wallet.ipEndpoint = defaults.endpoint;
+    }
   });
   rebuildPairs();
   rebuildFundRows();
+  applyWalletIpCache();
 };
 
 
@@ -1421,6 +1466,20 @@ const toggleWalletsHeader = () => {
   visibleWallets.value.forEach((wallet) => {
     wallet.selected = nextValue;
   });
+};
+
+const openWalletIp = (wallet: Wallet) => {
+  walletIpTarget.value = wallet;
+  walletIpName.value = wallet.ipName || "";
+  walletIpEndpoint.value = wallet.ipEndpoint || "";
+  showWalletIpModal.value = true;
+};
+
+const saveWalletIp = () => {
+  if (!walletIpTarget.value) return;
+  walletIpTarget.value.ipName = walletIpName.value.trim();
+  walletIpTarget.value.ipEndpoint = walletIpEndpoint.value.trim();
+  showWalletIpModal.value = false;
 };
 
 const openHedgeDesk = () => {
@@ -1453,10 +1512,6 @@ const openImport = () => {
 
 const openPairs = () => {
   showPairs.value = true;
-};
-
-const openProxy = () => {
-  showProxy.value = true;
 };
 
 const openWithdrawConfig = () => {
@@ -1648,18 +1703,21 @@ const exportKeys = () => {
     pushLog("无可导出的钱包。");
     return;
   }
-  const rows = wallets.map((wallet, idx) => {
+  const rows = wallets.map((wallet) => {
     const key = wallet.privateKey || "";
-    return `${idx + 1},${key}`;
+    const ipName = wallet.ipName || "";
+    const ipEndpoint = wallet.ipEndpoint || "";
+    return `${key},${ipName},${ipEndpoint}`;
   });
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+  const content = ["privateKey,ipName,ipEndpoint", ...rows].join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = "polymarket-wallets.csv";
   link.click();
   URL.revokeObjectURL(url);
-  pushLog("已导出私钥 CSV。");
+  pushLog("已导出钱包信息 CSV。");
 };
 
 const loadMarket = () => {
@@ -1755,21 +1813,6 @@ const clearPositions = () => {
 };
 
 const redeemAll = () => {};
-
-const addProxyProfile = () => {
-  const nextId = `proxy-${String(ipProfiles.length + 1).padStart(2, "0")}`;
-  ipProfiles.push({ id: nextId, name: nextId, endpoint: "" });
-};
-
-const copyEndpoint = async (endpoint: string) => {
-  if (!endpoint) return;
-  try {
-    await navigator.clipboard.writeText(endpoint);
-    pushLog(`已复制代理地址：${endpoint}`);
-  } catch {
-    pushLog("复制失败，请手动复制代理地址。");
-  }
-};
 
 rebuildPairs();
 startRefreshTimer();
