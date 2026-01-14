@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "ethers": "^6.13.4",
     "vue": "^3.4.27"
   },
   "devDependencies": {

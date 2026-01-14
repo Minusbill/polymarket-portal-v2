@@ -54,14 +54,14 @@
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'deposit' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="openDeposit"
+                  @click="currentPage = 'deposit'"
                 >
                 充值
               </button>
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'withdraw' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="openWithdraw"
+                  @click="currentPage = 'withdraw'"
                 >
                 提现
               </button>
@@ -84,7 +84,7 @@
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="exportKeys"
                 >
-                  导出钱包信息
+                  导出私钥
                 </button>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
@@ -96,9 +96,6 @@
                   <input type="checkbox" v-model="useProxy" />
                   使用 IP 代理
                 </label>
-                <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="seedWallets(100)">
-                  加载 100 个
-                </button>
                 <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="clearWallets">
                   清空
                 </button>
@@ -777,7 +774,7 @@
           <input type="file" accept=".csv,text/csv" class="hidden" @change="handleCsvImport" />
           选择 CSV 文件
         </label>
-        <span class="text-brand-700">CSV 格式：privateKey,ipName,ipEndpoint（含表头）</span>
+        <span class="text-brand-700">CSV 格式：privateKey,ipName,ipEndpoint（含表头，地址由私钥解析）</span>
       </div>
       <div class="mt-4 relative">
         <div class="pointer-events-none absolute inset-y-2 left-2 w-10 overflow-hidden text-xs text-brand-500">
@@ -1019,78 +1016,6 @@
     </div>
   </div>
 
-  <div v-if="showDepositGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showDepositGuide = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">充值使用说明</h2>
-        <button class="text-sm text-brand-500" @click="showDepositGuide = false">关闭</button>
-      </div>
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">交易所配置</div>
-          <div class="mt-2 text-xs text-brand-600">填写交易所 API Key/Secret 与 IP 白名单。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">提现参数</div>
-          <div class="mt-2 text-xs text-brand-600">设置每笔延迟与充值金额区间，系统按区间随机。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">选择地址</div>
-          <div class="mt-2 text-xs text-brand-600">勾选 Fund Address 进行批量充值。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">开始执行</div>
-          <div class="mt-2 text-xs text-brand-600">点击开始后按顺序提交，日志中可查看金额。</div>
-        </div>
-      </div>
-      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
-        请先核对地址与金额区间，避免误操作。
-      </div>
-      <div class="mt-4 flex items-center justify-between">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('depositGuide'); showDepositGuide = false">今天内不再显示</button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showDepositGuide = false">
-          我已了解
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showWithdrawGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWithdrawGuide = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">提现使用说明</h2>
-        <button class="text-sm text-brand-500" @click="showWithdrawGuide = false">关闭</button>
-      </div>
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">模式选择</div>
-          <div class="mt-2 text-xs text-brand-600">支持清空或部分提现，部分模式需填写金额。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">转出方式</div>
-          <div class="mt-2 text-xs text-brand-600">多转多或多转一，按需配置目标地址。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">批量金额</div>
-          <div class="mt-2 text-xs text-brand-600">可对选中地址一键应用统一金额。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">执行输出</div>
-          <div class="mt-2 text-xs text-brand-600">执行后查看日志，核对地址与金额。</div>
-        </div>
-      </div>
-      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
-        转账前请复核目标地址与模式选择。
-      </div>
-      <div class="mt-4 flex items-center justify-between">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('withdrawGuide'); showWithdrawGuide = false">今天内不再显示</button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showWithdrawGuide = false">
-          我已了解
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div v-if="showWalletIpModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWalletIpModal = false">
     <div class="w-full max-w-lg rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
@@ -1235,11 +1160,12 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { Wallet as EthersWallet } from "ethers";
 import type { ExecutionPlan, LogEntry, MarketInfo, PositionRow, Wallet, WalletPair } from "./types";
-import { makeMockMarket, makeMockPositions, makeMockWallets } from "./data/mock";
+import { makeMockMarket, makeMockPositions } from "./data/mock";
 import { maskAddress, parseSlug } from "./utils";
 
-const wallets = reactive<Wallet[]>(makeMockWallets(20));
+const wallets = reactive<Wallet[]>([]);
 const pairs = reactive<WalletPair[]>([]);
 const market = ref<MarketInfo | null>(null);
 const marketInput = ref("");
@@ -1251,8 +1177,6 @@ const showWithdrawConfig = ref(false);
 const showExecutionNotice = ref(false);
 const showHedgeGuide = ref(false);
 const showWalletGuide = ref(false);
-const showDepositGuide = ref(false);
-const showWithdrawGuide = ref(false);
 const showIntro = ref(false);
 const useProxy = ref(true);
 const darkMode = ref(false);
@@ -1541,6 +1465,7 @@ const confirmImport = () => {
     .filter(Boolean);
   const header = lines[0]?.toLowerCase() || "";
   const dataLines = header.includes("privatekey") ? lines.slice(1) : lines;
+  let invalidCount = 0;
   wallets.splice(0, wallets.length);
   dataLines.forEach((line, idx) => {
     const parts = line.split(",").map((part) => part.trim());
@@ -1548,10 +1473,17 @@ const confirmImport = () => {
     const ipNameRaw = parts[1] || "";
     const ipEndpointRaw = parts.slice(2).join(",");
     const defaults = !ipNameRaw && !ipEndpointRaw ? buildDefaultIp(idx) : null;
+    let address = "";
+    try {
+      address = new EthersWallet(key).address;
+    } catch {
+      invalidCount += 1;
+      return;
+    }
     wallets.push({
       id: `w-${idx + 1}`,
       nickname: `Wallet ${idx + 1}`,
-      address: `0x${key.slice(0, 4)}...${key.slice(-4)}`,
+      address,
       privateKey: key,
       balance: null,
       enabled: true,
@@ -1565,6 +1497,9 @@ const confirmImport = () => {
   rebuildFundRows();
   showImport.value = false;
   applyWalletIpCache();
+  if (invalidCount > 0) {
+    pushLog(`导入完成，${invalidCount} 条私钥无效已跳过。`);
+  }
 };
 
 const handleCsvImport = async (event: Event) => {
@@ -1582,20 +1517,6 @@ const clearWallets = () => {
   wallets.splice(0, wallets.length);
   pairs.splice(0, pairs.length);
   fundRows.value = [];
-};
-
-const seedWallets = (count = 20) => {
-  wallets.splice(0, wallets.length, ...makeMockWallets(count));
-  wallets.forEach((wallet, idx) => {
-    if (!wallet.ipName && !wallet.ipEndpoint) {
-      const defaults = buildDefaultIp(idx);
-      wallet.ipName = defaults.name;
-      wallet.ipEndpoint = defaults.endpoint;
-    }
-  });
-  rebuildPairs();
-  rebuildFundRows();
-  applyWalletIpCache();
 };
 
 
@@ -1640,16 +1561,6 @@ const openHedgeDesk = () => {
 const openWallets = () => {
   currentPage.value = "wallets";
   if (shouldShowPopup("walletGuide")) showWalletGuide.value = true;
-};
-
-const openDeposit = () => {
-  currentPage.value = "deposit";
-  if (shouldShowPopup("depositGuide")) showDepositGuide.value = true;
-};
-
-const openWithdraw = () => {
-  currentPage.value = "withdraw";
-  if (shouldShowPopup("withdrawGuide")) showWithdrawGuide.value = true;
 };
 
 const openFlow = () => {
@@ -1853,13 +1764,8 @@ const exportKeys = () => {
     pushLog("无可导出的钱包。");
     return;
   }
-  const rows = wallets.map((wallet) => {
-    const key = wallet.privateKey || "";
-    const ipName = wallet.ipName || "";
-    const ipEndpoint = wallet.ipEndpoint || "";
-    return `${key},${ipName},${ipEndpoint}`;
-  });
-  const content = ["privateKey,ipName,ipEndpoint", ...rows].join("\n");
+  const rows = wallets.map((wallet) => wallet.privateKey || "").filter(Boolean);
+  const content = ["privateKey", ...rows].join("\n");
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -1867,7 +1773,7 @@ const exportKeys = () => {
   link.download = "polymarket-wallets.csv";
   link.click();
   URL.revokeObjectURL(url);
-  pushLog("已导出钱包信息 CSV。");
+  pushLog("已导出私钥 CSV。");
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
