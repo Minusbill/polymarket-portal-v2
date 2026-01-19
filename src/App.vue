@@ -33,7 +33,7 @@
                 <button
                   class="w-full rounded-xl border px-3 py-2 text-left text-sm"
                   :class="currentPage === 'wallets' ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-brand-100'"
-                  @click="openWallets"
+                  @click="currentPage = 'wallets'"
                 >
                 钱包管理
               </button>
@@ -84,7 +84,7 @@
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                   @click="exportKeys"
                 >
-                  导出私钥
+                  导出钱包信息
                 </button>
                 <button
                   class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
@@ -96,6 +96,20 @@
                   <input type="checkbox" v-model="useProxy" />
                   使用 IP 代理
                 </label>
+                <button
+                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
+                  :disabled="proxyLoading"
+                  @click="loadSelectedProxyAddresses"
+                >
+                  {{ proxyLoading ? "加载中..." : "获取代理地址" }}
+                </button>
+                <button
+                  class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
+                  :disabled="walletBalanceLoading"
+                  @click="refreshBalances"
+                >
+                  {{ walletBalanceLoading ? "查询中..." : "查询余额" }}
+                </button>
                 <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="clearWallets">
                   清空
                 </button>
@@ -114,12 +128,6 @@
                   <option :value="50">50 / 页</option>
                   <option :value="100">100 / 页</option>
                 </select>
-                <button
-                  class="rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700"
-                  @click="refreshBalances"
-                >
-                  查询余额
-                </button>
                 <div class="text-xs text-brand-500">共 {{ filteredWallets.length }} 个</div>
               </div>
 
@@ -135,6 +143,7 @@
                       </th>
                       <th class="px-3 py-2 text-left">#</th>
                       <th class="px-3 py-2 text-left">地址</th>
+                      <th class="px-3 py-2 text-left">代理地址</th>
                       <th class="px-3 py-2 text-left">余额</th>
                       <th class="px-3 py-2 text-left">所属交易对</th>
                       <th v-if="useProxy" class="px-3 py-2 text-left">IP 配置</th>
@@ -147,6 +156,9 @@
                       </td>
                       <td class="px-3 py-2">{{ walletOffset + idx + 1 }}</td>
                       <td class="px-3 py-2 text-brand-600">{{ maskAddress(w.address) }}</td>
+                      <td class="px-3 py-2 text-brand-600">
+                        <span>{{ w.proxyAddress ? maskAddress(w.proxyAddress) : "-" }}</span>
+                      </td>
                       <td class="px-3 py-2">{{ w.balance === null ? "-" : w.balance.toFixed(2) }}</td>
                       <td class="px-3 py-2 text-xs text-brand-500">{{ pairNameForWallet(w.id) }}</td>
                       <td v-if="useProxy" class="px-3 py-2">
@@ -276,17 +288,19 @@
                           <div
                             v-for="(row, idx) in market.book.yesBids"
                             :key="`yes-bid-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border border-emerald-100 bg-emerald-50/40 px-2 py-1 text-xs"
+                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                            :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
                           >
                             <div
-                            class="absolute inset-y-0 left-0 bg-emerald-300/80"
+                              class="absolute inset-y-0 left-0"
+                              :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
                               :style="{ width: depthWidth(row.size, market.book.yesBids) }"
                             ></div>
                             <div class="relative flex items-center justify-between">
-                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
                             <span class="font-semibold">{{ row.price }}</span>
-                            <span class="text-brand-500">深度 {{ row.size }}</span>
-                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
                           </div>
                         </div>
@@ -294,17 +308,19 @@
                           <div
                             v-for="(row, idx) in market.book.yesAsks"
                             :key="`yes-ask-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border border-rose-100 bg-rose-50/40 px-2 py-1 text-xs"
+                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                            :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
                           >
                             <div
-                            class="absolute inset-y-0 left-0 bg-rose-300/80"
+                              class="absolute inset-y-0 left-0"
+                              :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
                               :style="{ width: depthWidth(row.size, market.book.yesAsks) }"
                             ></div>
                             <div class="relative flex items-center justify-between">
-                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
                             <span class="font-semibold">{{ row.price }}</span>
-                            <span class="text-brand-500">深度 {{ row.size }}</span>
-                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
                           </div>
                         </div>
@@ -318,17 +334,19 @@
                           <div
                             v-for="(row, idx) in market.book.noBids"
                             :key="`no-bid-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border border-emerald-100 bg-emerald-50/40 px-2 py-1 text-xs"
+                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                            :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
                           >
                             <div
-                            class="absolute inset-y-0 left-0 bg-emerald-300/80"
+                              class="absolute inset-y-0 left-0"
+                              :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
                               :style="{ width: depthWidth(row.size, market.book.noBids) }"
                             ></div>
                             <div class="relative flex items-center justify-between">
-                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
                             <span class="font-semibold">{{ row.price }}</span>
-                            <span class="text-brand-500">深度 {{ row.size }}</span>
-                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
                           </div>
                         </div>
@@ -336,17 +354,19 @@
                           <div
                             v-for="(row, idx) in market.book.noAsks"
                             :key="`no-ask-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border border-rose-100 bg-rose-50/40 px-2 py-1 text-xs"
+                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                            :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
                           >
                             <div
-                            class="absolute inset-y-0 left-0 bg-rose-300/80"
+                              class="absolute inset-y-0 left-0"
+                              :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
                               :style="{ width: depthWidth(row.size, market.book.noAsks) }"
                             ></div>
                             <div class="relative flex items-center justify-between">
-                            <span class="text-brand-600">#{{ idx + 1 }}</span>
+                            <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
                             <span class="font-semibold">{{ row.price }}</span>
-                            <span class="text-brand-500">深度 {{ row.size }}</span>
-                            <span class="text-brand-500">价值 {{ formatU(row.price, row.size) }} U</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
                           </div>
                         </div>
@@ -478,7 +498,6 @@
                 <table class="min-w-full text-sm">
                   <thead class="bg-brand-50 text-xs text-brand-500">
                     <tr>
-                      <th class="px-3 py-2 text-left">#</th>
                       <th class="px-3 py-2 text-left">账户</th>
                       <th class="px-3 py-2 text-left">市场</th>
                       <th class="px-3 py-2 text-left">持仓</th>
@@ -487,24 +506,30 @@
                   </thead>
                   <tbody>
                     <tr v-if="positions.length === 0" class="border-t border-brand-100">
-                      <td colspan="5" class="px-3 py-6 text-center text-sm text-brand-500">
+                      <td colspan="4" class="px-3 py-6 text-center text-sm text-brand-500">
                         暂无数据，请点击“查询仓位”。
                       </td>
                     </tr>
-                    <tr v-for="(pos, idx) in positions" :key="pos.id" class="border-t border-brand-100">
-                      <td class="px-3 py-2">{{ idx + 1 }}</td>
-                      <td class="px-3 py-2 text-brand-600">{{ maskAddress(pos.address) }}</td>
-                      <td class="px-3 py-2">{{ pos.market }}</td>
-                      <td class="px-3 py-2">{{ pos.size }}</td>
-                      <td class="px-3 py-2">
-                        <span
-                          class="rounded-full px-2 py-1 text-xs"
-                          :class="pos.status === '可 Redeem' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
-                        >
-                          {{ pos.status }}
-                        </span>
-                      </td>
-                    </tr>
+                    <template v-for="group in groupedPositions" :key="group.address">
+                      <tr class="border-t border-brand-100 bg-brand-50/60">
+                        <td class="px-3 py-2 text-brand-700" colspan="4">
+                          {{ maskAddress(group.address) }} · {{ group.items.length }} 个仓位
+                        </td>
+                      </tr>
+                      <tr v-for="pos in group.items" :key="pos.id" class="border-t border-brand-100">
+                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(pos.address) }}</td>
+                        <td class="px-3 py-2">{{ pos.market }}</td>
+                        <td class="px-3 py-2">{{ pos.size }}</td>
+                        <td class="px-3 py-2">
+                          <span
+                            class="rounded-full px-2 py-1 text-xs"
+                            :class="pos.status === '可 Redeem' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
+                          >
+                            {{ pos.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
@@ -530,15 +555,16 @@
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 class="font-display text-lg">充值</h2>
-                  <p class="text-xs text-brand-500">从交易所批量充值到 Fund Address。</p>
+                  <p class="text-xs text-brand-500">从交易所批量充值到 代理地址。</p>
                   <p v-if="depositStatus" class="mt-2 text-xs text-emerald-600">{{ depositStatus }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
                     class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                     @click="refreshFundBalances"
+                    :disabled="balanceLoading"
                   >
-                    查询余额
+                    {{ balanceLoading ? "查询中..." : "查询余额" }}
                   </button>
                 </div>
               </div>
@@ -596,7 +622,7 @@
                     </button>
                   </div>
                   <div class="mt-3 text-xs text-brand-500">
-                    充值将以“交易所提现”形式转入 Fund Address，可设置秒级延迟与金额区间随机。
+                    充值将以“交易所提现”形式转入 代理地址，可设置秒级延迟与金额区间随机。
                   </div>
                 </div>
               </div>
@@ -614,7 +640,7 @@
                         </th>
                         <th class="px-3 py-2 text-left">#</th>
                         <th class="px-3 py-2 text-left">钱包地址</th>
-                        <th class="px-3 py-2 text-left">Fund Address</th>
+                        <th class="px-3 py-2 text-left">代理地址</th>
                         <th class="px-3 py-2 text-left">余额</th>
                       </tr>
                     </thead>
@@ -625,7 +651,7 @@
                         </td>
                         <td class="px-3 py-2">{{ idx + 1 }}</td>
                         <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
-                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.fundAddress) }}</td>
+                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.proxyAddress) }}</td>
                       <td class="px-3 py-2">{{ row.balance === null ? "-" : row.balance.toFixed(2) }}</td>
                       </tr>
                     </tbody>
@@ -653,15 +679,16 @@
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 class="font-display text-lg">提现</h2>
-                  <p class="text-xs text-brand-500">从 Fund Address 批量转出到外部地址。</p>
+                  <p class="text-xs text-brand-500">从 代理地址 批量转出到外部地址。</p>
                   <p v-if="withdrawStatus" class="mt-2 text-xs text-emerald-600">{{ withdrawStatus }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
                     class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700"
                     @click="refreshWithdrawBalances"
+                    :disabled="balanceLoading"
                   >
-                    查询余额
+                    {{ balanceLoading ? "查询中..." : "查询余额" }}
                   </button>
                   <div class="flex flex-wrap items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700">
                     <label class="flex items-center gap-2">
@@ -713,7 +740,7 @@
                           </th>
                           <th class="px-3 py-2 text-left">#</th>
                           <th class="px-3 py-2 text-left">钱包地址</th>
-                          <th class="px-3 py-2 text-left">Fund Address</th>
+                          <th class="px-3 py-2 text-left">代理地址</th>
                           <th class="px-3 py-2 text-left">转入地址</th>
                           <th v-if="withdrawMode === 'partial'" class="px-3 py-2 text-left">金额</th>
                           <th class="px-3 py-2 text-left">余额</th>
@@ -726,7 +753,7 @@
                           </td>
                           <td class="px-3 py-2">{{ idx + 1 }}</td>
                           <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
-                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.fundAddress) }}</td>
+                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.proxyAddress) }}</td>
                           <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.withdrawAddress) }}</td>
                           <td v-if="withdrawMode === 'partial'" class="px-3 py-2">
                             <input
@@ -774,7 +801,7 @@
           <input type="file" accept=".csv,text/csv" class="hidden" @change="handleCsvImport" />
           选择 CSV 文件
         </label>
-        <span class="text-brand-700">CSV 格式：privateKey,ipName,ipEndpoint（含表头，地址由私钥解析）</span>
+        <span class="text-brand-700">CSV 格式：index,privateKey,ipName,ipEndpoint 或 privateKey,ipName,ipEndpoint（含表头）</span>
       </div>
       <div class="mt-4 relative">
         <div class="pointer-events-none absolute inset-y-2 left-2 w-10 overflow-hidden text-xs text-brand-500">
@@ -785,7 +812,7 @@
         <textarea
           v-model="importText"
           class="h-40 w-full rounded-xl border border-brand-200 p-3 pl-12 text-sm leading-5"
-          placeholder="每行一个私钥，或 CSV：privateKey,ipName,ipEndpoint（含表头）"
+          placeholder="每行一个私钥，或 CSV：index,privateKey,ipName,ipEndpoint"
         ></textarea>
       </div>
       <div class="mt-4 flex justify-end gap-2">
@@ -980,42 +1007,6 @@
     </div>
   </div>
 
-  <div v-if="showWalletGuide" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWalletGuide = false">
-    <div class="w-full max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">钱包管理使用说明</h2>
-        <button class="text-sm text-brand-500" @click="showWalletGuide = false">关闭</button>
-      </div>
-      <div class="mt-4 grid gap-3 md:grid-cols-2">
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">导入钱包</div>
-          <div class="mt-2 text-xs text-brand-600">支持多行私钥或 CSV 导入，钱包将自动生成昵称。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">钱包对管理</div>
-          <div class="mt-2 text-xs text-brand-600">按顺序自动配对，勾选参与的钱包对。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">IP 代理配置</div>
-          <div class="mt-2 text-xs text-brand-600">可为不同钱包配置代理，进行 IP 隔离。</div>
-        </div>
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
-          <div class="text-xs font-semibold text-brand-600">余额与筛选</div>
-          <div class="mt-2 text-xs text-brand-600">支持搜索、分页与余额刷新，便于快速定位钱包。</div>
-        </div>
-      </div>
-      <div class="mt-4 rounded-xl border border-brand-100 bg-white p-4 text-xs text-brand-700">
-        请确认钱包为双数并保管好私钥，平台仅用于当前会话展示。
-      </div>
-      <div class="mt-4 flex items-center justify-between">
-        <button class="text-xs text-brand-500" @click="hidePopupForToday('walletGuide'); showWalletGuide = false">今天内不再显示</button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="showWalletGuide = false">
-          我已了解
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div v-if="showWalletIpModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWalletIpModal = false">
     <div class="w-full max-w-lg rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
       <div class="flex items-center justify-between">
@@ -1074,6 +1065,17 @@
           保存
         </button>
       </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-4 right-4 z-50 space-y-2">
+    <div
+      v-for="toast in toasts"
+      :key="toast.id"
+      class="rounded-lg border px-3 py-2 text-xs shadow-soft"
+      :class="toast.tone === 'error' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-brand-200 bg-white text-brand-700'"
+    >
+      {{ toast.message }}
     </div>
   </div>
 
@@ -1159,8 +1161,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
-import { Wallet as EthersWallet } from "ethers";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { Contract, JsonRpcProvider, Wallet as EthersWallet, formatUnits, getAddress } from "ethers";
 import type { ExecutionPlan, LogEntry, MarketInfo, PositionRow, Wallet, WalletPair } from "./types";
 import { makeMockMarket, makeMockPositions } from "./data/mock";
 import { maskAddress, parseSlug } from "./utils";
@@ -1176,7 +1178,6 @@ const showFlow = ref(false);
 const showWithdrawConfig = ref(false);
 const showExecutionNotice = ref(false);
 const showHedgeGuide = ref(false);
-const showWalletGuide = ref(false);
 const showIntro = ref(false);
 const useProxy = ref(true);
 const darkMode = ref(false);
@@ -1197,6 +1198,18 @@ const hidePopupForToday = (key: string) => {
 if (shouldShowPopup("intro")) {
   showIntro.value = true;
 }
+
+onMounted(() => {
+  const stored = localStorage.getItem("walletVault");
+  const key = localStorage.getItem("walletVaultKey");
+  if (stored && key) {
+    try {
+      const parsed = JSON.parse(stored);
+      const keyBytes = new Uint8Array(base64ToBuffer(key));
+      decryptVault(keyBytes, parsed).then(hydrateWalletsFromVault).catch(() => {});
+    } catch {}
+  }
+});
 
 const readWalletIpCache = () => {
   if (typeof window === "undefined") return {} as Record<string, { name: string; endpoint: string }>;
@@ -1245,6 +1258,11 @@ const showWalletIpModal = ref(false);
 const walletIpTarget = ref<Wallet | null>(null);
 const walletIpName = ref("");
 const walletIpEndpoint = ref("");
+const showProxyAddress = ref(true);
+const proxyLoading = ref(false);
+const balanceLoading = ref(false);
+const walletBalanceLoading = ref(false);
+const toasts = ref<Array<{ id: number; message: string; tone: "info" | "error" }>>([]);
 const executionOrder = ref<"yes-no" | "no-yes">("yes-no");
 const executionDelayMin = ref<number | null>(null);
 const executionDelayMax = ref<number | null>(null);
@@ -1276,7 +1294,7 @@ const fundRows = ref(
   wallets.map((wallet, idx) => ({
     id: `fund-${idx + 1}`,
     address: wallet.address,
-    fundAddress: `0xfund${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
+    proxyAddress: wallet.proxyAddress || "",
     balance: null as number | null,
     selected: idx % 2 === 0,
   }))
@@ -1285,7 +1303,7 @@ const withdrawRows = ref(
   wallets.map((wallet, idx) => ({
     id: `wd-${idx + 1}`,
     address: wallet.address,
-    fundAddress: `0xfund${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
+    proxyAddress: wallet.proxyAddress || "",
     withdrawAddress: `0xwd${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
     amount: null as number | null,
     balance: null as number | null,
@@ -1303,6 +1321,15 @@ const filteredWallets = computed(() =>
     `${w.nickname} ${w.address}`.toLowerCase().includes(walletSearch.value.toLowerCase())
   )
 );
+
+const groupedPositions = computed(() => {
+  const groups = new Map<string, PositionRow[]>();
+  positions.value.forEach((pos) => {
+    if (!groups.has(pos.address)) groups.set(pos.address, []);
+    groups.get(pos.address)?.push(pos);
+  });
+  return Array.from(groups.entries()).map(([address, items]) => ({ address, items }));
+});
 
 const importLines = computed(() => {
   const lines = importText.value.split(/\r?\n/);
@@ -1339,6 +1366,7 @@ watch(
       return acc;
     }, {});
     localStorage.setItem("walletIpMap", JSON.stringify(map));
+    saveVault();
   },
   { deep: true }
 );
@@ -1411,6 +1439,140 @@ const depthWidth = (size: number, rows: Array<{ price: number; size: number }>) 
   return `${(ratio * 100).toFixed(2)}%`;
 };
 
+const POLYGON_RPCS = ["https://1rpc.io/matic"];
+const USDC_E_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+const ERC20_ABI = ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"];
+let rpcIndex = 0;
+const rpcProviders = new Map<string, JsonRpcProvider>();
+const usdcContracts = new Map<string, Contract>();
+let usdcDecimals: number | null = null;
+
+const nextRpc = () => {
+  const url = POLYGON_RPCS[rpcIndex % POLYGON_RPCS.length];
+  rpcIndex += 1;
+  return url;
+};
+
+const fetchUsdcEBalance = async (address: string) => {
+  const rpcUrl = nextRpc();
+  const provider =
+    rpcProviders.get(rpcUrl) ||
+    new JsonRpcProvider(rpcUrl, {
+      chainId: 137,
+      name: "polygon",
+    });
+  rpcProviders.set(rpcUrl, provider);
+
+  const contract =
+    usdcContracts.get(rpcUrl) || new Contract(USDC_E_ADDRESS, ERC20_ABI, provider);
+  usdcContracts.set(rpcUrl, contract);
+
+  const validated = getAddress(address);
+  const [decimals, rawBalance] = await Promise.all([
+    usdcDecimals ?? contract.decimals().catch(() => 6),
+    contract.balanceOf(validated),
+  ]);
+  if (usdcDecimals === null && typeof decimals === "number") usdcDecimals = decimals;
+
+  return Number(formatUnits(rawBalance, decimals));
+};
+
+const pushToast = (message: string, tone: "info" | "error" = "info") => {
+  const id = Date.now() + Math.random();
+  toasts.value.push({ id, message, tone });
+  window.setTimeout(() => {
+    toasts.value = toasts.value.filter((toast) => toast.id !== id);
+  }, 2400);
+};
+
+const bufferToBase64 = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+const base64ToBuffer = (value: string) =>
+  Uint8Array.from(atob(value), (c) => c.charCodeAt(0)).buffer;
+
+const importVaultKey = async (keyBytes: Uint8Array) =>
+  crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["encrypt", "decrypt"]);
+
+const ensureVaultKey = async () => {
+  const stored = localStorage.getItem("walletVaultKey");
+  if (stored) return new Uint8Array(base64ToBuffer(stored));
+  const keyBytes = crypto.getRandomValues(new Uint8Array(32));
+  localStorage.setItem("walletVaultKey", bufferToBase64(keyBytes.buffer));
+  return keyBytes;
+};
+
+const encryptVault = async (keyBytes: Uint8Array, payload: unknown) => {
+  const enc = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await importVaultKey(keyBytes);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(JSON.stringify(payload))
+  );
+  return {
+    v: 1,
+    iv: bufferToBase64(iv.buffer),
+    data: bufferToBase64(ciphertext),
+  };
+};
+
+const decryptVault = async (keyBytes: Uint8Array, vault: { iv: string; data: string }) => {
+  const dec = new TextDecoder();
+  const iv = new Uint8Array(base64ToBuffer(vault.iv));
+  const key = await importVaultKey(keyBytes);
+  const plaintext = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    base64ToBuffer(vault.data)
+  );
+  return JSON.parse(dec.decode(plaintext));
+};
+
+const saveVault = async () => {
+  if (typeof window === "undefined") return;
+  const payload = wallets.map((wallet) => ({
+    privateKey: wallet.privateKey || "",
+    ipName: wallet.ipName || "",
+    ipEndpoint: wallet.ipEndpoint || "",
+    proxyAddress: wallet.proxyAddress || "",
+  }));
+  const keyBytes = await ensureVaultKey();
+  const encrypted = await encryptVault(keyBytes, { wallets: payload });
+  localStorage.setItem("walletVault", JSON.stringify(encrypted));
+};
+
+const hydrateWalletsFromVault = (vaultData: { wallets?: Array<{ privateKey: string; ipName: string; ipEndpoint: string }> }) => {
+  const items = vaultData.wallets || [];
+  wallets.splice(0, wallets.length);
+  let invalidCount = 0;
+  items.forEach((item, idx) => {
+    try {
+      const address = new EthersWallet(item.privateKey).address;
+      wallets.push({
+        id: `w-${idx + 1}`,
+        nickname: `Wallet ${idx + 1}`,
+        address,
+        privateKey: item.privateKey,
+        balance: null,
+        enabled: true,
+        ipName: item.ipName || "",
+        ipEndpoint: item.ipEndpoint || "",
+        proxyAddress: item.proxyAddress || "",
+        volume: Number((Math.random() * 5200).toFixed(2)),
+        selected: true,
+      });
+    } catch {
+      invalidCount += 1;
+    }
+  });
+  rebuildPairs();
+  rebuildFundRows();
+  if (invalidCount > 0) {
+    pushLog(`解锁完成，${invalidCount} 条私钥无效已跳过。`);
+  }
+};
+
+
 const marketTokenIds = ref<{ yes: string | null; no: string | null }>({ yes: null, no: null });
 
 const rebuildPairs = () => {
@@ -1435,14 +1597,14 @@ const rebuildFundRows = () => {
   fundRows.value = wallets.map((wallet, idx) => ({
     id: `fund-${idx + 1}`,
     address: wallet.address,
-    fundAddress: `0xfund${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
+    proxyAddress: wallet.proxyAddress || "",
     balance: null,
     selected: idx % 2 === 0,
   }));
   withdrawRows.value = wallets.map((wallet, idx) => ({
     id: `wd-${idx + 1}`,
     address: wallet.address,
-    fundAddress: `0xfund${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
+    proxyAddress: wallet.proxyAddress || "",
     withdrawAddress: `0xwd${wallet.address.slice(2, 6)}...${wallet.address.slice(-4)}`,
     amount: null,
     balance: null,
@@ -1464,14 +1626,18 @@ const confirmImport = () => {
     .map((l) => l.trim())
     .filter(Boolean);
   const header = lines[0]?.toLowerCase() || "";
-  const dataLines = header.includes("privatekey") ? lines.slice(1) : lines;
+  const hasHeader =
+    header.includes("privatekey") || header.includes("ipname") || header.includes("ipendpoint") || header.includes("index");
+  const dataLines = hasHeader ? lines.slice(1) : lines;
   let invalidCount = 0;
-  wallets.splice(0, wallets.length);
+  const startIndex = wallets.length + 1;
   dataLines.forEach((line, idx) => {
     const parts = line.split(",").map((part) => part.trim());
-    const key = parts[0] || "";
-    const ipNameRaw = parts[1] || "";
-    const ipEndpointRaw = parts.slice(2).join(",");
+    const hasIndex = /^\d+$/.test(parts[0] || "");
+    const index = hasIndex ? Number(parts[0]) : startIndex + idx;
+    const key = hasIndex ? parts[1] || "" : parts[0] || "";
+    const ipNameRaw = hasIndex ? parts[2] || "" : parts[1] || "";
+    const ipEndpointRaw = hasIndex ? parts.slice(3).join(",") : parts.slice(2).join(",");
     const defaults = !ipNameRaw && !ipEndpointRaw ? buildDefaultIp(idx) : null;
     let address = "";
     try {
@@ -1481,22 +1647,24 @@ const confirmImport = () => {
       return;
     }
     wallets.push({
-      id: `w-${idx + 1}`,
-      nickname: `Wallet ${idx + 1}`,
-      address,
-      privateKey: key,
-      balance: null,
-      enabled: true,
-      ipName: defaults ? defaults.name : ipNameRaw,
-      ipEndpoint: defaults ? defaults.endpoint : ipEndpointRaw,
-      volume: Number((Math.random() * 5200).toFixed(2)),
-      selected: true,
-    });
+      id: `w-${index}`,
+      nickname: `Wallet ${index}`,
+        address,
+        privateKey: key,
+        balance: null,
+        enabled: true,
+        ipName: defaults ? defaults.name : ipNameRaw,
+        ipEndpoint: defaults ? defaults.endpoint : ipEndpointRaw,
+        proxyAddress: "",
+        volume: Number((Math.random() * 5200).toFixed(2)),
+        selected: true,
+      });
   });
   rebuildPairs();
   rebuildFundRows();
   showImport.value = false;
   applyWalletIpCache();
+  saveVault();
   if (invalidCount > 0) {
     pushLog(`导入完成，${invalidCount} 条私钥无效已跳过。`);
   }
@@ -1539,6 +1707,48 @@ const savePairConfig = () => {
   showPairConfig.value = false;
 };
 
+const loadProxyAddress = async (wallet: Wallet) => {
+  try {
+    const data = await fetchProxyAddress(wallet.address);
+    if (data?.proxyWallet) {
+      wallet.proxyAddress = data.proxyWallet;
+      rebuildFundRows();
+      pushLog(`已获取代理地址：${maskAddress(wallet.proxyAddress)}`);
+    } else if (data?.error === "profile not found") {
+      pushLog("账户未初始化。");
+      wallet.proxyAddress = "未初始化";
+    } else {
+      pushLog("未获取到代理地址。");
+      wallet.proxyAddress = "无法获取";
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    pushLog(`代理地址加载失败：${message}`);
+    wallet.proxyAddress = "无法获取";
+  }
+};
+
+const loadSelectedProxyAddresses = async () => {
+  const targets = wallets.filter(
+    (wallet) =>
+      wallet.selected && (!wallet.proxyAddress || wallet.proxyAddress === "无法获取" || wallet.proxyAddress === "未初始化")
+  );
+  if (targets.length === 0) {
+    pushLog("无可查询的钱包（已获取或未选择）。");
+    pushToast("无可查询的钱包（已获取或未选择）。", "error");
+    return;
+  }
+  proxyLoading.value = true;
+  pushLog(`开始获取代理地址：${targets.length} 个钱包`);
+  pushToast(`开始获取代理地址：${targets.length} 个钱包`);
+  for (const wallet of targets) {
+    await loadProxyAddress(wallet);
+  }
+  proxyLoading.value = false;
+  pushLog("代理地址获取完成。");
+  pushToast("代理地址获取完成。");
+};
+
 const openWalletIp = (wallet: Wallet) => {
   walletIpTarget.value = wallet;
   walletIpName.value = wallet.ipName || "";
@@ -1558,16 +1768,12 @@ const openHedgeDesk = () => {
   if (shouldShowPopup("hedgeGuide")) showHedgeGuide.value = true;
 };
 
-const openWallets = () => {
-  currentPage.value = "wallets";
-  if (shouldShowPopup("walletGuide")) showWalletGuide.value = true;
-};
-
 const openFlow = () => {
   showFlow.value = true;
 };
 
 const openImport = () => {
+  importText.value = "";
   showImport.value = true;
 };
 
@@ -1579,16 +1785,50 @@ const openWithdrawConfig = () => {
   showWithdrawConfig.value = true;
 };
 
-const refreshBalances = () => {
+const refreshBalances = async () => {
   const targets = wallets.filter((wallet) => wallet.selected);
   if (targets.length === 0) {
     pushLog("未选择钱包，无法查询余额。");
+    pushToast("未选择钱包，无法查询余额。", "error");
     return;
   }
-  targets.forEach((wallet) => {
-    wallet.balance = Number((Math.random() * 220 + 20).toFixed(2));
-  });
-  pushLog(`已更新 ${targets.length} 个钱包余额`);
+
+  const valid = targets.filter(
+    (wallet) =>
+      wallet.proxyAddress && wallet.proxyAddress !== "无法获取" && wallet.proxyAddress !== "未初始化"
+  );
+  const skipped = targets.length - valid.length;
+  if (valid.length === 0) {
+    pushLog("存在未获取代理地址的行，请先加载代理地址。");
+    pushToast("存在未获取代理地址的行，请先加载代理地址。", "error");
+    return;
+  }
+
+  walletBalanceLoading.value = true;
+  pushLog(`开始查询 ${valid.length} 个代理地址余额...`);
+  pushToast(`开始查询 ${valid.length} 个代理地址余额...`);
+
+  let failed = 0;
+  for (const wallet of valid) {
+    try {
+      wallet.balance = await fetchUsdcEBalance(wallet.proxyAddress);
+    } catch (err) {
+      failed += 1;
+      const message = err instanceof Error ? err.message : String(err);
+      pushLog(`余额查询失败（${maskAddress(wallet.proxyAddress)}）：${message}`);
+    }
+  }
+
+  if (skipped > 0) {
+    pushLog(`已跳过 ${skipped} 个未初始化或无法获取代理地址的钱包。`);
+  }
+
+  walletBalanceLoading.value = false;
+  if (failed > 0) {
+    pushToast(`余额查询完成，失败 ${failed} 个`, "error");
+  } else {
+    pushToast("余额查询完成。");
+  }
 };
 
 const refreshFundBalances = () => {
@@ -1598,11 +1838,31 @@ const refreshFundBalances = () => {
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
     return;
   }
-  targets.forEach((row) => {
-    row.balance = Number((Math.random() * 600 + 50).toFixed(2));
-  });
-  depositStatus.value = `已更新 ${targets.length} 个 Fund 地址余额`;
+  const missing = targets.find((row) => !row.proxyAddress);
+  if (missing) {
+    depositStatus.value = "存在未获取代理地址的行，请先加载代理地址。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    return;
+  }
+  balanceLoading.value = true;
+  depositStatus.value = `开始查询 ${targets.length} 个代理地址余额...`;
   depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+  Promise.all(
+    targets.map(async (row) => {
+      row.balance = await fetchUsdcEBalance(row.proxyAddress);
+    })
+  )
+    .then(() => {
+      depositStatus.value = `已更新 ${targets.length} 个代理地址余额`;
+      depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    })
+    .catch((error) => {
+      depositStatus.value = `查询失败：${error instanceof Error ? error.message : String(error)}`;
+      depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    })
+    .finally(() => {
+      balanceLoading.value = false;
+    });
 };
 
 const toggleFundHeader = () => {
@@ -1619,11 +1879,25 @@ const refreshWithdrawBalances = () => {
     withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
     return;
   }
-  targets.forEach((row) => {
-    row.balance = Number((Math.random() * 600 + 50).toFixed(2));
-  });
-  withdrawStatus.value = `已更新 ${targets.length} 个 Fund Address 余额`;
+  balanceLoading.value = true;
+  withdrawStatus.value = `开始查询 ${targets.length} 个代理地址余额...`;
   withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+  Promise.all(
+    targets.map(async (row) => {
+      row.balance = await fetchUsdcEBalance(row.proxyAddress);
+    })
+  )
+    .then(() => {
+      withdrawStatus.value = `已更新 ${targets.length} 个代理地址余额`;
+      withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+    })
+    .catch((error) => {
+      withdrawStatus.value = `查询失败：${error instanceof Error ? error.message : String(error)}`;
+      withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+    })
+    .finally(() => {
+      balanceLoading.value = false;
+    });
 };
 
 const toggleWithdrawHeader = () => {
@@ -1664,7 +1938,7 @@ const confirmDeposit = () => {
     const amount = pickDepositAmount(depositAmountMin.value as number, depositAmountMax.value as number);
     depositLogs.value.push({
       ts: new Date().toLocaleTimeString(),
-      message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.fundAddress)} 金额 ${amount} 已提交`,
+      message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.proxyAddress)} 金额 ${amount} 已提交`,
     });
   });
 };
@@ -1697,12 +1971,12 @@ const bulkWithdraw = () => {
       return;
     }
   }
-  withdrawStatus.value = `批量转出已提交：${targets.length} 个 Fund Address，${withdrawMode.value === "partial" ? "部分金额" : "清空"}，${transferMode.value === "many-to-one" ? "多转一" : "多转多"}`;
+  withdrawStatus.value = `批量转出已提交：${targets.length} 个代理地址，${withdrawMode.value === "partial" ? "部分金额" : "清空"}，${transferMode.value === "many-to-one" ? "多转一" : "多转多"}`;
   withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
   targets.forEach((row, idx) => {
     withdrawLogs.value.push({
       ts: new Date().toLocaleTimeString(),
-      message: `#${idx + 1} ${maskAddress(row.fundAddress)} -> ${maskAddress(transferMode.value === "many-to-one" ? singleTargetAddress.value : row.withdrawAddress)} ${withdrawMode.value === "partial" ? `金额 ${row.amount}` : "清空"} 已提交`,
+      message: `#${idx + 1} ${maskAddress(row.proxyAddress)} -> ${maskAddress(transferMode.value === "many-to-one" ? singleTargetAddress.value : row.withdrawAddress)} ${withdrawMode.value === "partial" ? `金额 ${row.amount}` : "清空"} 已提交`,
     });
   });
 };
@@ -1868,6 +2142,12 @@ const fetchOrderBook = async (tokenId: string) => {
     bids: Array.isArray(data?.bids) ? data.bids : [],
     asks: Array.isArray(data?.asks) ? data.asks : [],
   };
+};
+
+const fetchProxyAddress = async (address: string) => {
+  const response = await fetch(`/api/profile?address=${encodeURIComponent(address)}`);
+  if (!response.ok) throw new Error("代理地址请求失败");
+  return response.json();
 };
 
 const applyOrderBooks = async (tokenIds: { yes: string | null; no: string | null }) => {

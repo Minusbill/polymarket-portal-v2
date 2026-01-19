@@ -10,6 +10,7 @@ export const makeMockWallets = (count = 6): Wallet[] =>
     enabled: true,
     ipName: `proxy-0${(idx % 3) + 1}`,
     ipEndpoint: `http://127.0.0.1:808${idx % 3}`,
+    proxyAddress: "",
     volume: Number((Math.random() * 5200 + 300).toFixed(2)),
     selected: idx % 2 === 0,
   }));

@@ -7,6 +7,7 @@ export type Wallet = {
   enabled: boolean;
   ipName: string;
   ipEndpoint: string;
+  proxyAddress: string;
   volume: number;
   selected: boolean;
 };
