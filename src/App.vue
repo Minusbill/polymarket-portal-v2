@@ -1838,23 +1838,32 @@ const refreshFundBalances = () => {
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
     return;
   }
-  const missing = targets.find((row) => !row.proxyAddress);
-  if (missing) {
+  const valid = targets.filter(
+    (row) => row.proxyAddress && row.proxyAddress !== "无法获取" && row.proxyAddress !== "未初始化"
+  );
+  const skipped = targets.length - valid.length;
+  if (valid.length === 0) {
     depositStatus.value = "存在未获取代理地址的行，请先加载代理地址。";
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
     return;
   }
   balanceLoading.value = true;
-  depositStatus.value = `开始查询 ${targets.length} 个代理地址余额...`;
+  depositStatus.value = `开始查询 ${valid.length} 个代理地址余额...`;
   depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
   Promise.all(
-    targets.map(async (row) => {
+    valid.map(async (row) => {
       row.balance = await fetchUsdcEBalance(row.proxyAddress);
     })
   )
     .then(() => {
-      depositStatus.value = `已更新 ${targets.length} 个代理地址余额`;
+      depositStatus.value = `已更新 ${valid.length} 个代理地址余额`;
       depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+      if (skipped > 0) {
+        depositLogs.value.push({
+          ts: new Date().toLocaleTimeString(),
+          message: `已跳过 ${skipped} 个未初始化或无法获取代理地址的钱包。`,
+        });
+      }
     })
     .catch((error) => {
       depositStatus.value = `查询失败：${error instanceof Error ? error.message : String(error)}`;
@@ -1879,17 +1888,32 @@ const refreshWithdrawBalances = () => {
     withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
     return;
   }
+  const valid = targets.filter(
+    (row) => row.proxyAddress && row.proxyAddress !== "无法获取" && row.proxyAddress !== "未初始化"
+  );
+  const skipped = targets.length - valid.length;
+  if (valid.length === 0) {
+    withdrawStatus.value = "存在未获取代理地址的行，请先加载代理地址。";
+    withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+    return;
+  }
   balanceLoading.value = true;
-  withdrawStatus.value = `开始查询 ${targets.length} 个代理地址余额...`;
+  withdrawStatus.value = `开始查询 ${valid.length} 个代理地址余额...`;
   withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
   Promise.all(
-    targets.map(async (row) => {
+    valid.map(async (row) => {
       row.balance = await fetchUsdcEBalance(row.proxyAddress);
     })
   )
     .then(() => {
-      withdrawStatus.value = `已更新 ${targets.length} 个代理地址余额`;
+      withdrawStatus.value = `已更新 ${valid.length} 个代理地址余额`;
       withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
+      if (skipped > 0) {
+        withdrawLogs.value.push({
+          ts: new Date().toLocaleTimeString(),
+          message: `已跳过 ${skipped} 个未初始化或无法获取代理地址的钱包。`,
+        });
+      }
     })
     .catch((error) => {
       withdrawStatus.value = `查询失败：${error instanceof Error ? error.message : String(error)}`;
