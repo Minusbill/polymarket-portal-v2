@@ -6,11 +6,11 @@ import {TickSize} from "@polymarket/clob-client/dist/types";
 
 const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: string }[] }, side: Side): number => {
     if (side === Side.BUY) {
-        const bestAsk = orderBook.asks?.[0];
+        const bestAsk = orderBook.asks?.[orderBook.asks.length - 1];
         if (!bestAsk) throw new Error('订单簿无卖单，无法获取最优卖一价格');
         return Number(bestAsk.price);
     }
-    const bestBid = orderBook.bids?.[0];
+    const bestBid = orderBook.bids?.[orderBook.bids.length - 1];
     if (!bestBid) throw new Error('订单簿无买单，无法获取最优买一价格');
     return Number(bestBid.price);
 };
@@ -30,7 +30,7 @@ async function testBuy(proxyClientParam: CreateProxyParams) {
     console.log("buy 下单价格: ", price);
 
 
-    const orderType = OrderType.GTC;
+    const orderType = OrderType.FOK;
     const buyOrder = await clobClient.createOrder(
         {
             tokenID: tokenId,
@@ -63,7 +63,7 @@ async function testSell(proxyClientParam: CreateProxyParams) {
     console.log("sell 下单价格: ", price);
 
 
-    const orderType = OrderType.GTC;
+    const orderType = OrderType.FOK;
     const sellOrder = await clobClient.createOrder(
         {
             tokenID: tokenId,
