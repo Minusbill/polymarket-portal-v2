@@ -57,6 +57,9 @@ export type PositionRow = {
   market: string;
   size: number;
   status: "可 Redeem" | "持仓中";
+  endDate: string;
+  redeemable: boolean;
+  value: number;
 };
 
 export type LogEntry = {

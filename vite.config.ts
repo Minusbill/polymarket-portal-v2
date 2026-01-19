@@ -20,6 +20,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/book/, "/book"),
       },
+      "/api/positions": {
+        target: "https://data-api.polymarket.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/positions/, "/positions"),
+      },
+      "/api/bridge": {
+        target: "https://bridge.polymarket.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/bridge/, "/deposit"),
+      },
       "/api/rpc1": {
         target: "https://poly.api.pocket.network",
         changeOrigin: true,

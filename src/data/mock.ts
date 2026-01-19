@@ -61,4 +61,7 @@ export const makeMockPositions = (wallets: Wallet[]): PositionRow[] =>
     market: idx % 2 === 0 ? "epl-ars-liv-2026-01-08" : "nba-lal-bos-2026-01-08",
     size: Number((Math.random() * 120).toFixed(2)),
     status: idx % 3 === 0 ? "可 Redeem" : "持仓中",
+    endDate: "2026-01-08",
+    redeemable: idx % 3 === 0,
+    value: Number((Math.random() * 120).toFixed(2)),
   }));
