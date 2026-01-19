@@ -1446,7 +1446,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { Contract, JsonRpcProvider, Wallet as EthersWallet, formatUnits, getAddress } from "ethers";
+import { ethers, Wallet as EthersWallet } from "ethers";
 import type { ExecutionPlan, LogEntry, MarketInfo, PositionRow, Wallet, WalletPair } from "./types";
 import { makeMockMarket } from "./data/mock";
 import { maskAddress, parseSlug } from "./utils";
@@ -1749,11 +1749,16 @@ const depthWidth = (size: number, rows: Array<{ price: number; size: number }>) 
 };
 
 const POLYGON_RPCS = ["https://1rpc.io/matic"];
+const EXCHANGE_ADDRESS = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E";
+const EXCHANGE_ABI = [
+  "function getSafeAddress(address owner) view returns (address)",
+  "function getPolyProxyWalletAddress(address owner) view returns (address)",
+];
 const USDC_E_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const ERC20_ABI = ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"];
 let rpcIndex = 0;
-const rpcProviders = new Map<string, JsonRpcProvider>();
-const usdcContracts = new Map<string, Contract>();
+const rpcProviders = new Map<string, ethers.providers.JsonRpcProvider>();
+const usdcContracts = new Map<string, ethers.Contract>();
 let usdcDecimals: number | null = null;
 
 const nextRpc = () => {
@@ -1762,28 +1767,30 @@ const nextRpc = () => {
   return url;
 };
 
+const proxyProvider = new ethers.providers.JsonRpcProvider(POLYGON_RPCS[0], { chainId: 137, name: "polygon" });
+const proxyExchange = new ethers.Contract(EXCHANGE_ADDRESS, EXCHANGE_ABI, proxyProvider);
+
 const fetchUsdcEBalance = async (address: string) => {
   const rpcUrl = nextRpc();
   const provider =
     rpcProviders.get(rpcUrl) ||
-    new JsonRpcProvider(rpcUrl, {
+    new ethers.providers.JsonRpcProvider(rpcUrl, {
       chainId: 137,
       name: "polygon",
     });
   rpcProviders.set(rpcUrl, provider);
 
-  const contract =
-    usdcContracts.get(rpcUrl) || new Contract(USDC_E_ADDRESS, ERC20_ABI, provider);
+  const contract = usdcContracts.get(rpcUrl) || new ethers.Contract(USDC_E_ADDRESS, ERC20_ABI, provider);
   usdcContracts.set(rpcUrl, contract);
 
-  const validated = getAddress(address);
+  const validated = ethers.utils.getAddress(address);
   const [decimals, rawBalance] = await Promise.all([
     usdcDecimals ?? contract.decimals().catch(() => 6),
     contract.balanceOf(validated),
   ]);
   if (usdcDecimals === null && typeof decimals === "number") usdcDecimals = decimals;
 
-  return Number(formatUnits(rawBalance, decimals));
+  return Number(ethers.utils.formatUnits(rawBalance, decimals));
 };
 
 const pushToast = (message: string, tone: "info" | "error" = "info") => {
@@ -2042,17 +2049,27 @@ const loadProxyAddress = async (wallet: Wallet) => {
       wallet.proxyAddress = data.proxyWallet;
       rebuildFundRows();
       pushLog(`已获取代理地址：${maskAddress(wallet.proxyAddress)}`);
-    } else if (data?.error === "profile not found") {
-      pushLog("账户未初始化。");
-      wallet.proxyAddress = "未初始化";
     } else {
-      pushLog("未获取到代理地址。");
-      wallet.proxyAddress = "无法获取";
+      pushLog("未返回代理地址，尝试链上获取...");
+      pushToast("未返回代理地址，正在链上获取。");
+      const onchain = await fetchProxyAddressOnChain(wallet.address);
+      wallet.proxyAddress = onchain;
+      rebuildFundRows();
+      pushLog(`已获取代理地址：${maskAddress(wallet.proxyAddress)}`);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    pushLog(`代理地址加载失败：${message}`);
-    wallet.proxyAddress = "无法获取";
+    pushLog(`代理地址接口失败：${message}，尝试链上获取...`);
+    try {
+      const onchain = await fetchProxyAddressOnChain(wallet.address);
+      wallet.proxyAddress = onchain;
+      rebuildFundRows();
+      pushLog(`已获取代理地址：${maskAddress(wallet.proxyAddress)}`);
+    } catch (inner) {
+      const innerMessage = inner instanceof Error ? inner.message : String(inner);
+      pushLog(`链上获取失败：${innerMessage}`);
+      wallet.proxyAddress = "无法获取";
+    }
   }
 };
 
@@ -2550,6 +2567,11 @@ const fetchProxyAddress = async (address: string) => {
   const response = await fetch(`/api/profile?address=${encodeURIComponent(address)}`);
   if (!response.ok) throw new Error("代理地址请求失败");
   return response.json();
+};
+
+const fetchProxyAddressOnChain = async (address: string) => {
+  const owner = ethers.utils.getAddress(address);
+  return proxyExchange.getSafeAddress(owner);
 };
 
 const fetchDepositBridgeAddress = async (address: string) => {

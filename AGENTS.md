@@ -12,7 +12,7 @@
 - 页面加载后自动解密并恢复钱包。
 
 ## 市场加载
-- 通过 `/api/market?slug=...` 按 slug 加载市场（Vite 代理到 gamma `/markets`）。
+- 通过 `/api/market?slug=...` 按 slug 加载市场（Vite 代[createProxyWalletAndApiKey.ts](..%2F..%2F..%2FLibrary%2FContainers%2Fcom.tencent.xinWeChat%2FData%2FDocuments%2Fxwechat_files%2Fminus502_db68%2Ftemp%2FRWTemp%2F2026-01%2F33e1b2de697d8fa061f5e54453ea571e%2FcreateProxyWalletAndApiKey.ts)理到 gamma `/markets`）。
 - 通过 `/api/book?token_id=...` 拉取深度（Vite 代理到 clob `/book`）。
 - 仅手动刷新，不自动刷新。
 - 订单簿失败要报错，不插入假深度。

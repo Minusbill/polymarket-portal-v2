@@ -1,15 +1,18 @@
 {
   "name": "polymarket-portal-v2",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "ethers": "^6.13.4",
+    "@polymarket/clob-client": "^5.2.1",
+    "@polymarket/order-utils": "^3.0.1",
+    "dotenv": "^17.2.3",
+    "ethers": "^5.8.0",
     "vue": "^3.4.27"
   },
   "devDependencies": {
