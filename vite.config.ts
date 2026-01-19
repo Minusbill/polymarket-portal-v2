@@ -30,6 +30,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/bridge/, "/deposit"),
       },
+      "/api/leaderboard": {
+        target: "https://data-api.polymarket.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/leaderboard/, "/v1/leaderboard"),
+      },
       "/api/rpc1": {
         target: "https://poly.api.pocket.network",
         changeOrigin: true,

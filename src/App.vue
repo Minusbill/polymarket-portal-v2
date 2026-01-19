@@ -85,6 +85,13 @@
                 >
                   {{ walletBalanceLoading ? "查询中..." : "查询余额" }}
                 </button>
+                <button
+                  class="btn-outline"
+                  :disabled="walletVolumeLoading"
+                  @click="refreshWalletMetrics"
+                >
+                  {{ walletVolumeLoading ? "查询中..." : "查询交易量" }}
+                </button>
                 <button class="btn-outline" @click="clearWallets">
                   清空
                 </button>
@@ -120,6 +127,8 @@
                       <th class="px-3 py-2 text-left">地址</th>
                       <th class="px-3 py-2 text-left">代理地址</th>
                       <th class="px-3 py-2 text-left">余额</th>
+                      <th class="px-3 py-2 text-left">交易量</th>
+                      <th class="px-3 py-2 text-left">利润</th>
                       <th class="px-3 py-2 text-left">所属交易对</th>
                       <th v-if="useProxy" class="px-3 py-2 text-left">IP 配置</th>
                     </tr>
@@ -130,11 +139,24 @@
                         <input type="checkbox" v-model="w.selected" />
                       </td>
                       <td class="px-3 py-2">{{ walletOffset + idx + 1 }}</td>
-                      <td class="px-3 py-2 text-brand-600">{{ maskAddress(w.address) }}</td>
                       <td class="px-3 py-2 text-brand-600">
-                        <span>{{ w.proxyAddress ? maskAddress(w.proxyAddress) : "-" }}</span>
+                        <button class="text-left hover:text-brand-700" @click="copyText(w.address)">
+                          {{ maskAddress(w.address) }}
+                        </button>
+                      </td>
+                      <td class="px-3 py-2 text-brand-600">
+                        <button
+                          v-if="w.proxyAddress"
+                          class="text-left hover:text-brand-700"
+                          @click="copyText(w.proxyAddress)"
+                        >
+                          {{ maskAddress(w.proxyAddress) }}
+                        </button>
+                        <span v-else>-</span>
                       </td>
                       <td class="px-3 py-2">{{ w.balance === null ? "-" : w.balance.toFixed(2) }}</td>
+                      <td class="px-3 py-2">{{ w.volume === null ? "-" : w.volume.toFixed(2) }}</td>
+                      <td class="px-3 py-2">{{ w.pnl === null ? "-" : w.pnl.toFixed(2) }}</td>
                       <td class="px-3 py-2 text-xs text-brand-500">{{ pairNameForWallet(w.id) }}</td>
                       <td v-if="useProxy" class="px-3 py-2">
                         <div class="flex items-center justify-between gap-2">
@@ -449,7 +471,7 @@
                   <p class="text-xs text-brand-500">先加载市场，再选择钱包并设置随机间隔执行。</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <button class="btn-outline" @click="refreshMarket">刷新</button>
+                  <button class="btn-outline" @click="refreshSingleMarket">刷新</button>
                 </div>
               </div>
 
@@ -461,41 +483,41 @@
                       <div class="text-xs text-brand-500">手动刷新</div>
                     </div>
                     <div class="mt-3 flex gap-2">
-                      <input
-                        v-model="marketInput"
-                        placeholder="polymarket.com/event/... 或 slug"
-                        class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                      />
-                      <button class="btn-primary" @click="loadMarket">加载</button>
+                    <input
+                      v-model="singleMarketInput"
+                      placeholder="polymarket.com/event/... 或 slug"
+                      class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
+                    />
+                    <button class="btn-primary" @click="loadSingleMarket">加载</button>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2">
                       <a
-                        v-if="market?.slug"
-                        class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600"
-                        :href="`https://polymarket.com/event/${market.slug}`"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        进入市场
-                      </a>
-                    </div>
+                      v-if="singleMarket?.slug"
+                      class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600"
+                      :href="`https://polymarket.com/event/${singleMarket.slug}`"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      进入市场
+                    </a>
                   </div>
+                </div>
 
-                  <div v-if="market" class="rounded-xl border border-brand-100 bg-white p-3 min-h-[140px]">
-                    <div class="text-xs text-brand-500">市场信息</div>
-                    <div class="mt-2 text-base font-medium">{{ market.title }}</div>
-                    <div class="mt-1 text-xs text-brand-500">状态：{{ market.status }} ｜ 更新时间：{{ market.updatedAt }}</div>
-                    <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
-                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
-                        <div class="text-xs text-brand-500">Yes 价格</div>
-                        <div class="text-lg font-semibold text-brand-700">{{ market.yesPrice }}</div>
-                      </div>
-                      <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
-                        <div class="text-xs text-brand-500">No 价格</div>
-                        <div class="text-lg font-semibold text-brand-700">{{ market.noPrice }}</div>
-                      </div>
+                <div v-if="singleMarket" class="rounded-xl border border-brand-100 bg-white p-3 min-h-[140px]">
+                  <div class="text-xs text-brand-500">市场信息</div>
+                  <div class="mt-2 text-base font-medium">{{ singleMarket.title }}</div>
+                  <div class="mt-1 text-xs text-brand-500">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
+                  <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                      <div class="text-xs text-brand-500">Yes 价格</div>
+                      <div class="text-lg font-semibold text-brand-700">{{ singleMarket.yesPrice }}</div>
+                    </div>
+                    <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+                      <div class="text-xs text-brand-500">No 价格</div>
+                      <div class="text-lg font-semibold text-brand-700">{{ singleMarket.noPrice }}</div>
                     </div>
                   </div>
+                </div>
 
                   <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
@@ -565,62 +587,62 @@
                   <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
                     <div class="flex items-center justify-between">
                       <div class="text-xs text-brand-500">盘口深度</div>
-                      <div class="text-xs text-brand-500">{{ showSellOnly ? '卖一合计' : '买一合计' }} {{ (showSellOnly ? sumAsk : sumBid).toFixed(3) }}</div>
-                    </div>
-                    <div class="mt-2 flex items-center justify-between text-xs text-brand-500">
-                      <span>{{ sumHint }}</span>
-                      <label class="flex items-center gap-2">
-                        <input type="checkbox" v-model="showSellOnly" />
-                        只显示卖单
-                      </label>
-                    </div>
-                    <div v-if="sumAlert" class="mt-2 text-xs" :class="sumAlert.tone">
-                      {{ sumAlert.message }}
-                    </div>
-                    <div v-if="orderBookStatus" class="mt-2 text-xs text-rose-700">
-                      {{ orderBookStatus }}
-                    </div>
+                    <div class="text-xs text-brand-500">{{ singleShowSellOnly ? '卖一合计' : '买一合计' }} {{ (singleShowSellOnly ? singleSumAsk : singleSumBid).toFixed(3) }}</div>
                   </div>
+                  <div class="mt-2 flex items-center justify-between text-xs text-brand-500">
+                    <span>{{ singleSumHint }}</span>
+                    <label class="flex items-center gap-2">
+                      <input type="checkbox" v-model="singleShowSellOnly" />
+                      只显示卖单
+                    </label>
+                  </div>
+                  <div v-if="singleSumAlert" class="mt-2 text-xs" :class="singleSumAlert.tone">
+                    {{ singleSumAlert.message }}
+                  </div>
+                  <div v-if="singleOrderBookStatus" class="mt-2 text-xs text-rose-700">
+                    {{ singleOrderBookStatus }}
+                  </div>
+                </div>
 
-                  <div v-if="market" class="space-y-3 min-h-[360px]">
-                    <div class="rounded-xl border border-brand-100 bg-white p-3">
-                      <div class="text-xs text-brand-500">YES</div>
-                      <div class="mt-2 space-y-3 text-sm">
-                        <div v-if="!showSellOnly">
+                <div v-if="singleMarket" class="space-y-3 min-h-[360px]">
+                  <div class="rounded-xl border border-brand-100 bg-white p-3">
+                    <div class="text-xs text-brand-500">YES</div>
+                    <div class="mt-2 space-y-3 text-sm">
+                      <div v-if="!singleShowSellOnly">
+                        <div
+                          v-for="(row, idx) in singleMarket.book.yesBids"
+                          :key="`single-yes-bid-${idx}`"
+                          class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                          :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
+                        >
                           <div
-                            v-for="(row, idx) in market.book.yesBids"
-                            :key="`single-yes-bid-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                            :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
-                          >
-                            <div
-                              class="absolute inset-y-0 left-0"
-                              :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
-                              :style="{ width: depthWidth(row.size, market.book.yesBids) }"
-                            ></div>
-                            <div class="relative flex items-center justify-between">
-                              <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
-                              <span class="font-semibold">{{ row.price }}</span>
-                              <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
-                              <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
-                            </div>
+                            class="absolute inset-y-0 left-0"
+                            :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
+                            :style="{ width: depthWidth(row.size, singleMarket.book.yesBids) }"
+                          ></div>
+                          <div class="relative flex items-center justify-between">
+                            <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
+                            <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                           </div>
                         </div>
-                        <div>
+                      </div>
+                      <div>
+                        <div
+                          v-for="(row, idx) in singleMarket.book.yesAsks"
+                          :key="`single-yes-ask-${idx}`"
+                          class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                          :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
+                        >
                           <div
-                            v-for="(row, idx) in market.book.yesAsks"
-                            :key="`single-yes-ask-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                            :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
-                          >
-                            <div
-                              class="absolute inset-y-0 left-0"
-                              :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
-                              :style="{ width: depthWidth(row.size, market.book.yesAsks) }"
-                            ></div>
-                            <div class="relative flex items-center justify-between">
-                              <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
-                              <span class="font-semibold">{{ row.price }}</span>
+                            class="absolute inset-y-0 left-0"
+                            :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
+                            :style="{ width: depthWidth(row.size, singleMarket.book.yesAsks) }"
+                          ></div>
+                          <div class="relative flex items-center justify-between">
+                            <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
                               <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
                               <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
@@ -629,41 +651,41 @@
                       </div>
                     </div>
 
-                    <div class="rounded-2xl border border-brand-100 bg-white p-3">
-                      <div class="text-xs text-brand-500">NO</div>
-                      <div class="mt-2 space-y-3 text-sm">
-                        <div v-if="!showSellOnly">
+                  <div class="rounded-2xl border border-brand-100 bg-white p-3">
+                    <div class="text-xs text-brand-500">NO</div>
+                    <div class="mt-2 space-y-3 text-sm">
+                      <div v-if="!singleShowSellOnly">
+                        <div
+                          v-for="(row, idx) in singleMarket.book.noBids"
+                          :key="`single-no-bid-${idx}`"
+                          class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                          :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
+                        >
                           <div
-                            v-for="(row, idx) in market.book.noBids"
-                            :key="`single-no-bid-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                            :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
-                          >
-                            <div
-                              class="absolute inset-y-0 left-0"
-                              :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
-                              :style="{ width: depthWidth(row.size, market.book.noBids) }"
-                            ></div>
-                            <div class="relative flex items-center justify-between">
-                              <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
-                              <span class="font-semibold">{{ row.price }}</span>
+                            class="absolute inset-y-0 left-0"
+                            :class="darkMode ? 'bg-emerald-600/60' : 'bg-emerald-300/80'"
+                            :style="{ width: depthWidth(row.size, singleMarket.book.noBids) }"
+                          ></div>
+                          <div class="relative flex items-center justify-between">
+                            <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
+                            <span class="font-semibold">{{ row.price }}</span>
                               <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
                               <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
                             </div>
                           </div>
                         </div>
-                        <div>
+                      <div>
+                        <div
+                          v-for="(row, idx) in singleMarket.book.noAsks"
+                          :key="`single-no-ask-${idx}`"
+                          class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
+                          :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
+                        >
                           <div
-                            v-for="(row, idx) in market.book.noAsks"
-                            :key="`single-no-ask-${idx}`"
-                            class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                            :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
-                          >
-                            <div
-                              class="absolute inset-y-0 left-0"
-                              :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
-                              :style="{ width: depthWidth(row.size, market.book.noAsks) }"
-                            ></div>
+                            class="absolute inset-y-0 left-0"
+                            :class="darkMode ? 'bg-rose-600/60' : 'bg-rose-300/80'"
+                            :style="{ width: depthWidth(row.size, singleMarket.book.noAsks) }"
+                          ></div>
                             <div class="relative flex items-center justify-between">
                               <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ idx + 1 }}</span>
                               <span class="font-semibold">{{ row.price }}</span>
@@ -919,8 +941,16 @@
                           <input type="checkbox" v-model="row.selected" />
                         </td>
                         <td class="px-3 py-2">{{ idx + 1 }}</td>
-                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
-                        <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.proxyAddress) }}</td>
+                        <td class="px-3 py-2 text-brand-600">
+                          <button class="text-left hover:text-brand-700" @click="copyText(row.address)">
+                            {{ maskAddress(row.address) }}
+                          </button>
+                        </td>
+                        <td class="px-3 py-2 text-brand-600">
+                          <button class="text-left hover:text-brand-700" @click="copyText(row.proxyAddress)">
+                            {{ maskAddress(row.proxyAddress) }}
+                          </button>
+                        </td>
                         <td class="px-3 py-2">
                           <div class="flex items-center gap-2">
                             <span class="text-brand-600">{{ row.depositAddress ? maskAddress(row.depositAddress) : "-" }}</span>
@@ -1036,9 +1066,21 @@
                             <input type="checkbox" v-model="row.selected" />
                           </td>
                           <td class="px-3 py-2">{{ idx + 1 }}</td>
-                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.address) }}</td>
-                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.proxyAddress) }}</td>
-                          <td class="px-3 py-2 text-brand-600">{{ maskAddress(row.withdrawAddress) }}</td>
+                          <td class="px-3 py-2 text-brand-600">
+                            <button class="text-left hover:text-brand-700" @click="copyText(row.address)">
+                              {{ maskAddress(row.address) }}
+                            </button>
+                          </td>
+                          <td class="px-3 py-2 text-brand-600">
+                            <button class="text-left hover:text-brand-700" @click="copyText(row.proxyAddress)">
+                              {{ maskAddress(row.proxyAddress) }}
+                            </button>
+                          </td>
+                          <td class="px-3 py-2 text-brand-600">
+                            <button class="text-left hover:text-brand-700" @click="copyText(row.withdrawAddress)">
+                              {{ maskAddress(row.withdrawAddress) }}
+                            </button>
+                          </td>
                           <td v-if="withdrawMode === 'partial'" class="px-3 py-2">
                             <input
                               v-model.number="row.amount"
@@ -1455,6 +1497,8 @@ const wallets = reactive<Wallet[]>([]);
 const pairs = reactive<WalletPair[]>([]);
 const market = ref<MarketInfo | null>(null);
 const marketInput = ref("");
+const singleMarket = ref<MarketInfo | null>(null);
+const singleMarketInput = ref("");
 const importText = ref("");
 const showImport = ref(false);
 const showPairs = ref(false);
@@ -1545,6 +1589,8 @@ const transferMode = ref<"many-to-many" | "many-to-one">("many-to-many");
 const singleTargetAddress = ref("");
 const orderBookStatus = ref("");
 const showSellOnly = ref(true);
+const singleOrderBookStatus = ref("");
+const singleShowSellOnly = ref(true);
 const showWalletIpModal = ref(false);
 const walletIpTarget = ref<Wallet | null>(null);
 const walletIpName = ref("");
@@ -1554,6 +1600,7 @@ const proxyLoading = ref(false);
 const balanceLoading = ref(false);
 const walletBalanceLoading = ref(false);
 const depositBridgeLoading = ref(false);
+const walletVolumeLoading = ref(false);
 const toasts = ref<Array<{ id: number; message: string; tone: "info" | "error" }>>([]);
 const executionOrder = ref<"yes-no" | "no-yes">("yes-no");
 const executionDelayMin = ref<number | null>(null);
@@ -1680,6 +1727,30 @@ watch(
   { deep: true, immediate: true }
 );
 
+const resetHedgeState = () => {
+  market.value = null;
+  marketInput.value = "";
+  marketTokenIds.value = { yes: null, no: null };
+  orderBookStatus.value = "";
+  showSellOnly.value = true;
+  logs.value = [];
+};
+
+const resetSingleState = () => {
+  singleMarket.value = null;
+  singleMarketInput.value = "";
+  singleMarketTokenIds.value = { yes: null, no: null };
+  singleOrderBookStatus.value = "";
+  singleShowSellOnly.value = true;
+  singleLogs.value = [];
+};
+
+watch(currentPage, (page, prev) => {
+  if (page === prev) return;
+  if (page === "hedge") resetHedgeState();
+  if (page === "single") resetSingleState();
+});
+
 const selectedPairs = computed(() => pairs.filter((p) => p.selected));
 const customPairCount = computed(() => pairs.filter((p) => p.amount && p.amount > 0).length);
 
@@ -1716,6 +1787,41 @@ const sumHint = computed(() => {
 const sumAlert = computed(() => {
   if (!market.value) return null;
   const diff = Number(((showSellOnly.value ? sumAsk.value : sumBid.value) - 1).toFixed(3));
+  if (Math.abs(diff) < 0.001) return null;
+  const direction = diff > 0 ? "+" : "";
+  return {
+    message: `合计偏离 1（${direction}${diff}），注意差价`,
+    tone: diff > 0 ? "text-amber-700" : "text-rose-700",
+  };
+});
+
+const singleSumBid = computed(() => {
+  if (!singleMarket.value) return 0;
+  return (
+    Number(singleMarket.value.book.yesBids[0]?.price || 0) +
+    Number(singleMarket.value.book.noBids[0]?.price || 0)
+  );
+});
+
+const singleSumAsk = computed(() => {
+  if (!singleMarket.value) return 0;
+  return (
+    Number(singleMarket.value.book.yesAsks[0]?.price || 0) +
+    Number(singleMarket.value.book.noAsks[0]?.price || 0)
+  );
+});
+
+const singleSumHint = computed(() => {
+  if (!singleMarket.value) return "请先加载市场";
+  const value = singleShowSellOnly.value ? singleSumAsk.value : singleSumBid.value;
+  if (value > 1) return "合计高于 1，可能存在磨损偏差";
+  if (value < 1) return "合计低于 1，可能存在磨损偏差";
+  return "合计接近 1，请关注深度";
+});
+
+const singleSumAlert = computed(() => {
+  if (!singleMarket.value) return null;
+  const diff = Number(((singleShowSellOnly.value ? singleSumAsk.value : singleSumBid.value) - 1).toFixed(3));
   if (Math.abs(diff) < 0.001) return null;
   const direction = diff > 0 ? "+" : "";
   return {
@@ -1885,7 +1991,8 @@ const hydrateWalletsFromVault = (vaultData: { wallets?: Array<{ privateKey: stri
         ipName: item.ipName || "",
         ipEndpoint: item.ipEndpoint || "",
         proxyAddress: item.proxyAddress || "",
-        volume: Number((Math.random() * 5200).toFixed(2)),
+        volume: null,
+        pnl: null,
         selected: true,
       });
     } catch {
@@ -1901,6 +2008,7 @@ const hydrateWalletsFromVault = (vaultData: { wallets?: Array<{ privateKey: stri
 
 
 const marketTokenIds = ref<{ yes: string | null; no: string | null }>({ yes: null, no: null });
+const singleMarketTokenIds = ref<{ yes: string | null; no: string | null }>({ yes: null, no: null });
 
 const rebuildPairs = () => {
   pairs.splice(0, pairs.length);
@@ -1984,7 +2092,8 @@ const confirmImport = () => {
         ipName: defaults ? defaults.name : ipNameRaw,
         ipEndpoint: defaults ? defaults.endpoint : ipEndpointRaw,
         proxyAddress: "",
-        volume: Number((Math.random() * 5200).toFixed(2)),
+        volume: null,
+        pnl: null,
         selected: true,
       });
   });
@@ -2173,6 +2282,50 @@ const refreshBalances = async () => {
     pushToast(`余额查询完成，失败 ${failed} 个`, "error");
   } else {
     pushToast("余额查询完成。");
+  }
+};
+
+const refreshWalletMetrics = async () => {
+  const targets = wallets.filter((wallet) => wallet.selected);
+  if (targets.length === 0) {
+    pushLog("未选择钱包，无法查询交易量。");
+    pushToast("未选择钱包，无法查询交易量。", "error");
+    return;
+  }
+  const valid = targets.filter(
+    (wallet) =>
+      wallet.proxyAddress && wallet.proxyAddress !== "无法获取" && wallet.proxyAddress !== "未初始化"
+  );
+  const skipped = targets.length - valid.length;
+  if (valid.length === 0) {
+    pushLog("存在未获取代理地址的行，请先加载代理地址。");
+    pushToast("存在未获取代理地址的行，请先加载代理地址。", "error");
+    return;
+  }
+  walletVolumeLoading.value = true;
+  pushLog(`开始查询 ${valid.length} 个代理地址交易量...`);
+  let failed = 0;
+  for (const wallet of valid) {
+    try {
+      const data = await fetchWalletLeaderboard(wallet.proxyAddress);
+      wallet.volume = data?.vol ?? 0;
+      wallet.pnl = data?.pnl ?? 0;
+    } catch (error) {
+      failed += 1;
+      wallet.volume = 0;
+      wallet.pnl = 0;
+      const message = error instanceof Error ? error.message : String(error);
+      pushLog(`交易量查询失败（${maskAddress(wallet.proxyAddress)}）：${message}`);
+    }
+  }
+  if (skipped > 0) {
+    pushLog(`已跳过 ${skipped} 个未初始化或无法获取代理地址的钱包。`);
+  }
+  walletVolumeLoading.value = false;
+  if (failed > 0) {
+    pushToast(`交易量查询完成，失败 ${failed} 个`, "error");
+  } else {
+    pushToast("交易量查询完成。");
   }
 };
 
@@ -2569,6 +2722,20 @@ const fetchProxyAddress = async (address: string) => {
   return response.json();
 };
 
+const fetchWalletLeaderboard = async (address: string) => {
+  const params = new URLSearchParams({
+    category: "OVERALL",
+    timePeriod: "ALL",
+    orderBy: "PNL",
+    limit: "25",
+    user: address,
+  });
+  const response = await fetch(`/api/leaderboard?${params.toString()}`);
+  if (!response.ok) throw new Error("交易量请求失败");
+  const data = await response.json();
+  return Array.isArray(data) && data.length ? data[0] : null;
+};
+
 const fetchProxyAddressOnChain = async (address: string) => {
   const owner = ethers.utils.getAddress(address);
   return proxyExchange.getSafeAddress(owner);
@@ -2632,6 +2799,37 @@ const applyOrderBooks = async (tokenIds: { yes: string | null; no: string | null
   }
 };
 
+const applySingleOrderBooks = async (tokenIds: { yes: string | null; no: string | null }) => {
+  if (!singleMarket.value) return;
+  if (!tokenIds.yes || !tokenIds.no) {
+    singleOrderBookStatus.value = "订单簿 token_id 缺失，无法加载深度。";
+    return;
+  }
+  try {
+    const [yesBook, noBook] = await Promise.all([fetchOrderBook(tokenIds.yes), fetchOrderBook(tokenIds.no)]);
+    const topThree = (list: Array<{ price: string; size: string }> | undefined) =>
+      list && list.length
+        ? list.slice(-3).reverse().map((item) => ({ price: Number(item.price), size: Number(item.size) }))
+        : [];
+    singleMarket.value = {
+      ...singleMarket.value,
+      updatedAt: new Date().toLocaleString(),
+      book: {
+        yesBids: topThree(yesBook.bids),
+        yesAsks: topThree(yesBook.asks),
+        noBids: topThree(noBook.bids),
+        noAsks: topThree(noBook.asks),
+      },
+    };
+    singleOrderBookStatus.value = "";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    singleOrderBookStatus.value = `订单簿加载失败：${message}`;
+    pushSingleLog(singleOrderBookStatus.value);
+    console.error("Order book fetch failed:", error);
+  }
+};
+
 const loadMarket = async () => {
   const slug = parseSlug(marketInput.value);
   if (!slug) {
@@ -2650,6 +2848,24 @@ const loadMarket = async () => {
   }
 };
 
+const loadSingleMarket = async () => {
+  const slug = parseSlug(singleMarketInput.value);
+  if (!slug) {
+    pushSingleLog("请输入有效的市场 slug 或链接。");
+    return;
+  }
+  try {
+    const result = await fetchMarketBySlug(slug);
+    singleMarket.value = result.market;
+    singleMarketTokenIds.value = result.tokenIds;
+    singleMarketInput.value = slug;
+    singleOrderBookStatus.value = "";
+    await applySingleOrderBooks(result.tokenIds);
+  } catch (error) {
+    pushSingleLog("市场加载失败，请检查 slug 或稍后重试。");
+  }
+};
+
 const refreshMarket = async () => {
   if (!marketInput.value) return;
   const slug = parseSlug(marketInput.value);
@@ -2665,6 +2881,21 @@ const refreshMarket = async () => {
   }
 };
 
+const refreshSingleMarket = async () => {
+  if (!singleMarketInput.value) return;
+  const slug = parseSlug(singleMarketInput.value);
+  if (!slug) return;
+  try {
+    const result = await fetchMarketBySlug(slug);
+    singleMarket.value = result.market;
+    singleMarketTokenIds.value = result.tokenIds;
+    singleOrderBookStatus.value = "";
+    await applySingleOrderBooks(result.tokenIds);
+  } catch {
+    pushSingleLog("刷新失败，请稍后重试。");
+  }
+};
+
 const pushLog = (message: string) => {
   logs.value.push({ ts: new Date().toLocaleTimeString(), message });
   if (logs.value.length > 60) logs.value.shift();
@@ -2677,7 +2908,7 @@ const pushSingleLog = (message: string) => {
 
 const executeSingle = () => {
   const selected = wallets.filter((wallet) => singleSelections[wallet.id]);
-  if (!market.value) {
+  if (!singleMarket.value) {
     pushSingleLog("未加载市场，无法执行。");
     return;
   }

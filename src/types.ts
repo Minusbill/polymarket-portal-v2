@@ -8,7 +8,8 @@ export type Wallet = {
   ipName: string;
   ipEndpoint: string;
   proxyAddress: string;
-  volume: number;
+  volume: number | null;
+  pnl: number | null;
   selected: boolean;
 };
 
