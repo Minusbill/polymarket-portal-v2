@@ -2698,7 +2698,9 @@ const mapMarket = (raw: any, slug: string): MarketInfo => {
 };
 
 const fetchMarketBySlug = async (slug: string) => {
-  const response = await fetch(`/api/market?slug=${encodeURIComponent(slug)}`);
+  const isConditionId = /^0x[0-9a-fA-F]{64}$/.test(slug);
+  const queryKey = isConditionId ? "conditionId" : "slug";
+  const response = await fetch(`/api/market?${queryKey}=${encodeURIComponent(slug)}`);
   if (!response.ok) throw new Error("API 请求失败");
   const data = await response.json();
   const raw = Array.isArray(data) ? data[0] : data;
@@ -2844,7 +2846,8 @@ const loadMarket = async () => {
     orderBookStatus.value = "";
     await applyOrderBooks(result.tokenIds);
   } catch (error) {
-    pushLog("市场加载失败，请检查 slug 或稍后重试。");
+    const message = error instanceof Error ? error.message : String(error);
+    pushLog(`市场加载失败：${message}`);
   }
 };
 
@@ -2862,7 +2865,8 @@ const loadSingleMarket = async () => {
     singleOrderBookStatus.value = "";
     await applySingleOrderBooks(result.tokenIds);
   } catch (error) {
-    pushSingleLog("市场加载失败，请检查 slug 或稍后重试。");
+    const message = error instanceof Error ? error.message : String(error);
+    pushSingleLog(`市场加载失败：${message}`);
   }
 };
 
