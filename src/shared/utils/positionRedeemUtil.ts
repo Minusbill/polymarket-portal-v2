@@ -25,6 +25,16 @@ export type RedeemCheckResult = {
 };
 
 export class PositionRedeemUtil {
+    /**
+     * 检查是否可赎回（含结算状态/胜负/余额）
+     * @param params.conditionId 市场条件ID
+     * @param params.tokenId 订单对应的 tokenId
+     * @param params.tokens 市场全部 token 列表（含 tokenId/outcome/index）
+     * @param params.signer 读取链上数据的 signer
+     * @param params.holderAddress 可选：持仓地址（Safe 传 Safe 地址）
+     * @param params.negRisk 可选：是否 NegRisk 市场
+     * @returns {RedeemCheckResult} 赎回可用性与原因
+     */
     static async canRedeem(params: {
         conditionId: string;
         tokenId: string;
@@ -72,6 +82,17 @@ export class PositionRedeemUtil {
         return {redeemable: true, settled: true, isWin: true, outcomeIndex};
     }
 
+    /**
+     * 执行赎回（支持 NegRisk 与 Safe 代理钱包）
+     * @param params.conditionId 市场条件ID
+     * @param params.tokenId 订单对应的 tokenId
+     * @param params.tokens 市场全部 token 列表
+     * @param params.signer 发送链上交易的 signer（EOA）
+     * @param params.holderAddress 可选：持仓地址（Safe 传 Safe 地址）
+     * @param params.negRisk 可选：是否 NegRisk 市场
+     * @param params.safe 可选：Safe 参数（owner + safeAddress）
+     * @returns {Promise<string | null>} 成功返回 txHash，失败返回 null
+     */
     static async redeem(params: {
         conditionId: string;
         tokenId: string;
@@ -100,6 +121,13 @@ export class PositionRedeemUtil {
         return PositionRedeemUtil.redeemStandard(params.conditionId, params.signer, params.safe);
     }
 
+    /**
+     * Safe 交易签名（1-of-1 eth_sign）
+     * @param safe Safe 合约实例
+     * @param owner Safe owner（EOA）
+     * @param params 交易参数
+     * @returns {Promise<string>} Safe 签名 bytes
+     */
     private static async signSafeTx(
         safe: ethers.Contract,
         owner: ethers.Wallet,
@@ -134,6 +162,13 @@ export class PositionRedeemUtil {
         return ethers.utils.hexConcat([r, s, vFixed]);
     }
 
+    /**
+     * 标准市场赎回（可选 Safe execTransaction）
+     * @param conditionId 市场条件ID
+     * @param signer 发送交易的 signer（EOA）
+     * @param safe 可选：Safe 参数（owner + safeAddress）
+     * @returns {Promise<string | null>} 成功返回 txHash，失败返回 null
+     */
     private static async redeemStandard(
         conditionId: string,
         signer: ethers.Signer,
@@ -210,6 +245,14 @@ export class PositionRedeemUtil {
         }
     }
 
+    /**
+     * NegRisk 市场赎回（含 adapter / fallback，可选 Safe）
+     * @param conditionId 市场条件ID
+     * @param signer 发送交易的 signer（EOA）
+     * @param holderAddress 可选：持仓地址（Safe 传 Safe 地址）
+     * @param safe 可选：Safe 参数（owner + safeAddress）
+     * @returns {Promise<string | null>} 成功返回 txHash，失败返回 null
+     */
     private static async redeemNegRisk(
         conditionId: string,
         signer: ethers.Signer,

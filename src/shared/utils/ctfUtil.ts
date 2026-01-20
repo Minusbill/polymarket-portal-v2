@@ -16,7 +16,11 @@ const CHAIN_ID = 137;
 const ADDRESS_ZERO = ethers.constants.AddressZero;
 
 /**
- * 查询某个 tokenId 的 ERC1155 余额（CTF）\n+ */
+ * 查询某个 tokenId 的 ERC1155 余额（CTF）
+ * @param signer 读取余额的 signer
+ * @param tokenId CTF tokenId
+ * @returns {Promise<string>} 余额（格式化后字符串）
+ */
 export const getTokenBalance = async (signer: ethers.Signer, tokenId: string): Promise<string> => {
     const contracts = getChainContracts(CHAIN_ID);
     const ctf = new ethers.Contract(contracts.conditionalTokens, abiBalance, signer);
@@ -24,6 +28,13 @@ export const getTokenBalance = async (signer: ethers.Signer, tokenId: string): P
     return ethers.utils.formatUnits(bal, CONDITIONAL_TOKEN_DECIMALS);
 };
 
+/**
+ * Safe 交易签名（1-of-1 eth_sign）
+ * @param safe Safe 合约实例
+ * @param owner Safe owner（EOA）
+ * @param params 交易参数
+ * @returns {Promise<string>} Safe 签名 bytes
+ */
 const signSafeTx = async (
     safe: ethers.Contract,
     owner: Wallet,
@@ -59,9 +70,13 @@ const signSafeTx = async (
 };
 
 
-
 /**
  * 使用 Safe 造票：EOA 作为 owner 签名，Safe 作为交易主体
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param conditionId 条件ID
+ * @param amountUSDC 造票数量（USDC）
+ * @returns {Promise<string | null>} 成功返回 txHash，失败返回 null
  */
 export const splitPositionBySafe = async (
     owner: Wallet,
@@ -148,6 +163,13 @@ export const splitPositionBySafe = async (
 
 /**
  * 使用 Safe 合并票：EOA 作为 owner 签名，Safe 作为交易主体
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param conditionId 条件ID
+ * @param yesTokenId YES tokenId
+ * @param noTokenId NO tokenId
+ * @param amount 可选：自定义 merge 数量
+ * @returns {Promise<string | null>} 成功返回 txHash，失败返回 null
  */
 export const mergePositionsBySafe = async (
     owner: Wallet,
@@ -240,8 +262,10 @@ export const mergePositionsBySafe = async (
 };
 
 /**
- * 便捷测试：使用 .env 的 PK 在标准二元市场上铸造 YES+NO
- * 用法：在脚本中调用 testSplitPosition('<conditionId>', 5)
+ * 便捷测试：使用配置钱包在标准二元市场上铸造 YES+NO（Safe）
+ * @param conditionId 条件ID
+ * @param amountUsd 造票数量（USDC）
+ * @returns {Promise<void>}
  */
 export const testSplitPosition = async (conditionId: string, amountUsd: number): Promise<void> => {
     const provider = new ethers.providers.JsonRpcProvider('https://polygon.drpc.org');
@@ -258,6 +282,13 @@ export const testSplitPosition = async (conditionId: string, amountUsd: number):
     }
 };
 
+/**
+ * 便捷测试：merge 回 USDC（Safe）
+ * @param conditionId 条件ID
+ * @param yesId YES tokenId
+ * @param noId NO tokenId
+ * @returns {Promise<void>}
+ */
 export const testMergePositions = async (conditionId: string, yesId: string, noId: string): Promise<void> => {
     const provider = new ethers.providers.JsonRpcProvider('https://polygon.drpc.org');
 
@@ -272,6 +303,11 @@ export const testMergePositions = async (conditionId: string, yesId: string, noI
     }
 };
 
+/**
+ * 便捷测试：查询某个 tokenId 的 CTF 余额
+ * @param tokenId CTF tokenId
+ * @returns {Promise<void>}
+ */
 export const testTokenBalance = async (tokenId: string): Promise<void> => {
     const provider = new ethers.providers.JsonRpcProvider('');
 

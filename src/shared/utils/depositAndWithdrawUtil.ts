@@ -7,6 +7,13 @@ import {getChainContracts, COLLATERAL_TOKEN_DECIMALS} from '../config/contracts'
 const logger = createLogger('DepositAndWithdrawUtil');
 const ADDRESS_ZERO = ethers.constants.AddressZero;
 
+/**
+ * Safe 交易签名（1-of-1 eth_sign）
+ * @param safe Safe 合约实例
+ * @param owner Safe owner（EOA）
+ * @param params 交易参数
+ * @returns {Promise<string>} Safe 签名 bytes
+ */
 const signSafeTx = async (
     safe: ethers.Contract,
     owner: Wallet,
@@ -41,7 +48,13 @@ const signSafeTx = async (
     return ethers.utils.hexConcat([r, s, vFixed]);
 };
 
-// 存钱到代理钱包
+/**
+ * 充值原生币到 Safe
+ * @param owner 付款 EOA
+ * @param safeAddress Safe 地址
+ * @param amountEth 金额（原生币）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const depositToSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -74,7 +87,14 @@ export const depositToSafe = async (
     return tx.hash;
 };
 
-// 提前到代理钱包
+/**
+ * 从 Safe 提现原生币到指定地址
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param toAddress 收款地址
+ * @param amountEth 金额（原生币）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const withdrawFromSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -140,6 +160,15 @@ export const withdrawFromSafe = async (
     return tx.hash;
 };
 
+/**
+ * 充值 ERC20 到 Safe（EOA 直接 transfer）
+ * @param owner 付款 EOA
+ * @param tokenAddress ERC20 合约地址
+ * @param safeAddress Safe 地址
+ * @param amount 金额
+ * @param decimals 代币精度（默认 6）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const depositErc20ToSafe = async (
     owner: Wallet,
     tokenAddress: string,
@@ -171,6 +200,16 @@ export const depositErc20ToSafe = async (
     return tx.hash;
 };
 
+/**
+ * 从 Safe 提现 ERC20 到指定地址
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param tokenAddress ERC20 合约地址
+ * @param toAddress 收款地址
+ * @param amount 金额
+ * @param decimals 代币精度（默认 6）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const withdrawErc20FromSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -245,7 +284,13 @@ export const withdrawErc20FromSafe = async (
     return tx.hash;
 };
 
-// 从eoa钱包存款到代理钱包
+/**
+ * 充值 USDC.e 到 Safe
+ * @param owner 付款 EOA
+ * @param safeAddress Safe 地址
+ * @param amount 金额（USDC.e）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const depositUsdcToSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -255,7 +300,14 @@ export const depositUsdcToSafe = async (
     return depositErc20ToSafe(owner, contracts.collateral, safeAddress, amount, COLLATERAL_TOKEN_DECIMALS);
 };
 
-// 从代理钱包提取usdc到指定地址
+/**
+ * 从 Safe 提现 USDC.e 到指定地址
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param toAddress 收款地址
+ * @param amount 金额（USDC.e）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const withdrawUsdcFromSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -266,7 +318,13 @@ export const withdrawUsdcFromSafe = async (
     return withdrawErc20FromSafe(owner, safeAddress, contracts.collateral, toAddress, amount, COLLATERAL_TOKEN_DECIMALS);
 };
 
-// 从eoa钱包存款到代理钱包
+/**
+ * 充值原生币到 Safe（便捷方法）
+ * @param owner 付款 EOA
+ * @param safeAddress Safe 地址
+ * @param amount 金额（原生币）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const depositNativeToSafe = async (
     owner: Wallet,
     safeAddress: string,
@@ -275,7 +333,14 @@ export const depositNativeToSafe = async (
     return depositToSafe(owner, safeAddress, amount);
 };
 
-// 从代理钱包提取原生币到指定地址
+/**
+ * 从 Safe 提现原生币到指定地址（便捷方法）
+ * @param owner Safe owner（EOA）
+ * @param safeAddress Safe 地址
+ * @param toAddress 收款地址
+ * @param amount 金额（原生币）
+ * @returns {Promise<string>} 交易哈希
+ */
 export const withdrawNativeFromSafe = async (
     owner: Wallet,
     safeAddress: string,
