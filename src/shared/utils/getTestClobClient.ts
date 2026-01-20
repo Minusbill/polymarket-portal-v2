@@ -8,6 +8,9 @@ type WalletRow = {
     clobApiKey: string;
     clobSecret: string;
     clobPassPhrase: string;
+    builderApiKey?: string;
+    builderSecret?: string;
+    builderPassPhrase?: string;
 };
 
 export async function getTestClobClient() {
@@ -30,6 +33,13 @@ export async function getTestClobClient() {
             secret: item.clobSecret,
             passphrase: item.clobPassPhrase,
         },
+        builderCreds: item.builderApiKey
+            ? {
+                  key: item.builderApiKey,
+                  secret: item.builderSecret ?? '',
+                  passphrase: item.builderPassPhrase ?? '',
+              }
+            : undefined,
     };
 
     return {
@@ -37,5 +47,4 @@ export async function getTestClobClient() {
         wallet: item,
     };
 }
-
 

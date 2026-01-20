@@ -5,6 +5,9 @@
     "proxyPublicKey": "",
     "clobApiKey": "",
     "clobSecret": "",
-    "clobPassPhrase": ""
+    "clobPassPhrase": "",
+    "builderApiKey":  "",
+    "builderSecret":  "",
+    "builderPassPhrase":  ""
   }
 ]

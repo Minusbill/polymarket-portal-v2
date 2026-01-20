@@ -1,11 +1,9 @@
 import {Wallet} from 'ethers';
 import {ClobClient, Chain} from '@polymarket/clob-client';
 import {SignatureType} from '@polymarket/order-utils';
+import {BuilderConfig} from '@polymarket/builder-signing-sdk';
 import {appConfig} from '../config';
 
-
-const host = "";
-const chain_Id = Chain.POLYGON
 
 export type ApiCreds = {
     key: string;
@@ -13,10 +11,16 @@ export type ApiCreds = {
     passphrase: string;
 };
 
+export type BuilderCreds = {
+    key: string;
+    secret: string;
+    passphrase: string;
+};
 
 export type CreateBaseParams = {
     privateKey: string;
     creds?: Partial<ApiCreds>;
+    builderCreds?: Partial<BuilderCreds>;
 };
 
 export type CreateProxyParams = CreateBaseParams & {
@@ -36,8 +40,17 @@ export class PolyClobClient {
                 passphrase: params.creds.passphrase ?? '',
             }
             : undefined;
+        const builderConfig = params.builderCreds
+            ? new BuilderConfig({
+                localBuilderCreds: {
+                    key: params.builderCreds.key ?? '',
+                    secret: params.builderCreds.secret ?? '',
+                    passphrase: params.builderCreds.passphrase ?? '',
+                },
+            })
+            : undefined;
 
-        return new ClobClient(host, chainId, signer, creds);
+        return new ClobClient(host, chainId, signer, creds, undefined, undefined, undefined, undefined, builderConfig);
     }
 
 
@@ -52,6 +65,25 @@ export class PolyClobClient {
                 passphrase: params.creds.passphrase ?? '',
             }
             : undefined;
-        return new ClobClient(host, chainId, signer, creds, SignatureType.POLY_GNOSIS_SAFE, params.proxyWallet);
+        const builderConfig = params.builderCreds
+            ? new BuilderConfig({
+                localBuilderCreds: {
+                    key: params.builderCreds.key ?? '',
+                    secret: params.builderCreds.secret ?? '',
+                    passphrase: params.builderCreds.passphrase ?? '',
+                },
+            })
+            : undefined;
+        return new ClobClient(
+            host,
+            chainId,
+            signer,
+            creds,
+            SignatureType.POLY_GNOSIS_SAFE,
+            params.proxyWallet,
+            undefined,
+            undefined,
+            builderConfig,
+        );
     }
 }

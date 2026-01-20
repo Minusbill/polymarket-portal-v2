@@ -1,8 +1,11 @@
 import {getTestClobClient} from "./getTestClobClient";
 import {OrderType, Side, type ClobClient} from "@polymarket/clob-client";
 import {TickSize} from "@polymarket/clob-client/dist/types";
-import {depositUsdcToSafe, withdrawNativeFromSafe, withdrawUsdcFromSafe} from "./commonUtils";
+import {depositUsdcToSafe, withdrawNativeFromSafe, withdrawUsdcFromSafe} from "./depositAndWithdrawUtil";
 import {ethers} from "ethers";
+
+
+const tokenId = "80753924362286813025723810767987419426133508714823014411280631192015782509451";
 
 const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: string }[] }, side: Side): number => {
     if (side === Side.BUY) {
@@ -18,7 +21,6 @@ const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: str
 
 async function testBuy(clobClient: ClobClient) {
     ////// Buy //////
-    const tokenId = "27004807393950410906002609239267750253092117017703725527868501811343874303881";
 
     const orderBook = await clobClient.getOrderBook(tokenId);
 
@@ -49,7 +51,6 @@ async function testBuy(clobClient: ClobClient) {
 
 async function testSell(clobClient: ClobClient) {
     ////// Sell //////
-    const tokenId = "27004807393950410906002609239267750253092117017703725527868501811343874303881";
     const orderBook = await clobClient.getOrderBook(tokenId);
 
     console.log("OrderBook: ", orderBook);
@@ -99,7 +100,7 @@ async function depositUsdc() {
     const {client, wallet} = await getTestClobClient();
     const provider = new ethers.providers.JsonRpcProvider("https://polygon.drpc.org");
     let owner = new ethers.Wallet(wallet.privateKey, provider);
-    await depositUsdcToSafe(owner, wallet.proxyPublicKey || "", 1);
+    await depositUsdcToSafe(owner, wallet.proxyPublicKey || "", 5);
 }
 
 
@@ -117,8 +118,8 @@ async function withdrawUsdc() {
     await withdrawUsdcFromSafe(owner, wallet.proxyPublicKey || "", owner.address, 5.87);
 }
 
-withdrawUsdc();
+//withdrawUsdc();
 //withdrawNative();
 //depositUsdc();
 
-//test();
+test();
