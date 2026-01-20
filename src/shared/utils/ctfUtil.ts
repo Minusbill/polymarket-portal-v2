@@ -273,7 +273,7 @@ export const testMergePositions = async (conditionId: string, yesId: string, noI
 };
 
 export const testTokenBalance = async (tokenId: string): Promise<void> => {
-    const provider = new ethers.providers.JsonRpcProvider('https://wiser-quaint-sailboat.matic.quiknode.pro/b1e46f126196e7f5522115cae58fecb44d84a2ac/');
+    const provider = new ethers.providers.JsonRpcProvider('');
 
     let testClobClient = await getTestClobClient();
     const pk = testClobClient.wallet.privateKey;

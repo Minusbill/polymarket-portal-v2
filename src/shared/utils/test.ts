@@ -1,6 +1,8 @@
 import {getTestClobClient} from "./getTestClobClient";
 import {OrderType, Side, type ClobClient} from "@polymarket/clob-client";
 import {TickSize} from "@polymarket/clob-client/dist/types";
+import {depositUsdcToSafe, withdrawNativeFromSafe, withdrawUsdcFromSafe} from "./commonUtils";
+import {ethers} from "ethers";
 
 const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: string }[] }, side: Side): number => {
     if (side === Side.BUY) {
@@ -92,5 +94,31 @@ async function test() {
     }
     await testBuy(client);
 }
+
+async function depositUsdc() {
+    const {client, wallet} = await getTestClobClient();
+    const provider = new ethers.providers.JsonRpcProvider("https://polygon.drpc.org");
+    let owner = new ethers.Wallet(wallet.privateKey, provider);
+    await depositUsdcToSafe(owner, wallet.proxyPublicKey || "", 1);
+}
+
+
+async function withdrawNative() {
+    const {wallet} = await getTestClobClient();
+    const provider = new ethers.providers.JsonRpcProvider("https://polygon.drpc.org");
+    let owner = new ethers.Wallet(wallet.privateKey, provider);
+    await withdrawNativeFromSafe(owner, wallet.proxyPublicKey || "", owner.address, 4);
+}
+
+async function withdrawUsdc() {
+    const {wallet} = await getTestClobClient();
+    const provider = new ethers.providers.JsonRpcProvider("https://polygon.drpc.org");
+    let owner = new ethers.Wallet(wallet.privateKey, provider);
+    await withdrawUsdcFromSafe(owner, wallet.proxyPublicKey || "", owner.address, 5.87);
+}
+
+withdrawUsdc();
+//withdrawNative();
+//depositUsdc();
 
 //test();
