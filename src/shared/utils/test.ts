@@ -1,7 +1,5 @@
-import {CreateProxyParams, PolyClobClient} from "./polyClobClient";
-import {OrderType, Side} from "@polymarket/clob-client";
-import {readFileSync} from "fs";
-import {resolve} from "path";
+import {getTestClobClient} from "./getTestClobClient";
+import {OrderType, Side, type ClobClient} from "@polymarket/clob-client";
 import {TickSize} from "@polymarket/clob-client/dist/types";
 
 const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: string }[] }, side: Side): number => {
@@ -15,9 +13,8 @@ const getBestPrice = (orderBook: { bids: { price: string }[]; asks: { price: str
     return Number(bestBid.price);
 };
 
-async function testBuy(proxyClientParam: CreateProxyParams) {
-    let clobClient = PolyClobClient.createProxyClient(proxyClientParam);
 
+async function testBuy(clobClient: ClobClient) {
     ////// Buy //////
     const tokenId = "27004807393950410906002609239267750253092117017703725527868501811343874303881";
 
@@ -48,10 +45,7 @@ async function testBuy(proxyClientParam: CreateProxyParams) {
 }
 
 
-async function testSell(proxyClientParam: CreateProxyParams) {
-
-    let clobClient = PolyClobClient.createProxyClient(proxyClientParam);
-
+async function testSell(clobClient: ClobClient) {
     ////// Sell //////
     const tokenId = "27004807393950410906002609239267750253092117017703725527868501811343874303881";
     const orderBook = await clobClient.getOrderBook(tokenId);
@@ -80,6 +74,7 @@ async function testSell(proxyClientParam: CreateProxyParams) {
     console.log("Sell Order Result", result);
 }
 
+
 async function test() {
     const actionRaw = process.argv[2];
     if (!actionRaw) {
@@ -89,38 +84,13 @@ async function test() {
     if (action !== 'buy' && action !== 'sell') {
         throw new Error(`参数错误：${actionRaw}，仅支持 buy 或 sell`);
     }
-    const configPath = resolve(process.cwd(), 'src/shared/config/poly-wallet.json');
-    const raw = readFileSync(configPath, 'utf-8');
-    const wallets = JSON.parse(raw) as Array<{
-        privateKey: string;
-        proxyPublicKey?: string;
-        clobApiKey: string;
-        clobSecret: string;
-        clobPassPhrase: string;
-    }>;
-    if (!wallets.length) {
-        throw new Error('poly-wallet.json 为空');
-    }
-    const item = wallets[0];
-    if (!item.privateKey || !item.proxyPublicKey) {
-        throw new Error('poly-wallet.json 缺少 privateKey 或 proxyPublicKey');
-    }
-
-    let proxyClientParam: CreateProxyParams = {
-        privateKey: item.privateKey,
-        proxyWallet: item.proxyPublicKey,
-        creds: {
-            key: item.clobApiKey,
-            secret: item.clobSecret,
-            passphrase: item.clobPassPhrase,
-        },
-    };
+    const {client} = await getTestClobClient();
 
     if (action === 'sell') {
-        await testSell(proxyClientParam);
+        await testSell(client);
         return;
     }
-    await testBuy(proxyClientParam);
+    await testBuy(client);
 }
 
-test();
+//test();
