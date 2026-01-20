@@ -3,6 +3,7 @@ import type { MarketInfo, PositionRow, RewardRow, Wallet } from "../types";
 export const makeMockWallets = (count = 6): Wallet[] =>
   Array.from({ length: count }).map((_, idx) => ({
     id: `w-${idx + 1}`,
+    index: idx + 1,
     nickname: `Wallet ${idx + 1}`,
     address: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
     privateKey: `0x${Math.random().toString(16).padEnd(66, "0").slice(0, 66)}`,

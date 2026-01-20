@@ -1,5 +1,6 @@
 export type Wallet = {
   id: string;
+  index: string;
   nickname: string;
   address: string;
   privateKey?: string;
@@ -56,6 +57,7 @@ export type PositionRow = {
   id: string;
   address: string;
   market: string;
+  slug: string;
   size: number;
   status: "可 Redeem" | "持仓中";
   endDate: string;
