@@ -4,7 +4,7 @@ import {safeAbi} from '../abi';
 import {usdcAbi} from '../abi/usdcAbi';
 import {getChainContracts, COLLATERAL_TOKEN_DECIMALS} from '../config/contracts';
 
-const logger = createLogger('CommonUtils');
+const logger = createLogger('DepositAndWithdrawUtil');
 const ADDRESS_ZERO = ethers.constants.AddressZero;
 
 const signSafeTx = async (
