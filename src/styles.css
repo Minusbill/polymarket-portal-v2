@@ -85,6 +85,23 @@ table thead th {
   background-color: #111827 !important;
 }
 
+.theme-dark .bg-white\/90,
+.theme-dark .bg-white\/80,
+.theme-dark .bg-white\/60 {
+  background-color: #111827 !important;
+}
+
+.theme-dark .bg-brand-50\/60,
+.theme-dark .bg-brand-50\/40 {
+  background-color: #111827 !important;
+}
+
+.theme-dark .panel,
+.theme-dark .table-shell {
+  background-color: #0b1224 !important;
+  border-color: #1f2937 !important;
+}
+
 .theme-dark .border-brand-100,
 .theme-dark .border-brand-200 {
   border-color: #1f2937 !important;
@@ -103,6 +120,10 @@ table thead th {
 .theme-dark .text-brand-500,
 .theme-dark .text-brand-400 {
   color: #94a3b8 !important;
+}
+
+.theme-dark .text-brand-300 {
+  color: #64748b !important;
 }
 
 .theme-dark .table-shell tbody tr:hover {
