@@ -228,7 +228,7 @@
                         </th>
                         <th class="px-3 py-2 text-left">#</th>
                         <th class="px-3 py-2 text-left">钱包地址</th>
-                        <th class="px-3 py-2 text-left">代理地址</th>
+                        <th class="px-3 py-2 text-left">桥接地址</th>
                         <th class="px-3 py-2 text-left">余额</th>
                         <th class="px-3 py-2 text-left">仓位数量</th>
                         <th class="px-3 py-2 text-left">仓位价值(U)</th>
@@ -510,7 +510,7 @@
                 </div>
                 <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
                   <div v-if="singleLogs.length === 0" class="text-brand-400">暂无输出。</div>
-                  <div v-for="(log, idx) in singleLogs" :key="`${log.ts}-${idx}`">
+                  <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`">
                     [{{ log.ts }}] {{ log.message }}
                   </div>
                 </div>
@@ -600,7 +600,7 @@
                 </div>
                 <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
                   <div v-if="depositLogs.length === 0" class="text-brand-400">暂无输出。</div>
-                  <div v-for="(log, idx) in depositLogs" :key="`${log.ts}-${idx}`">
+                  <div v-for="(log, idx) in [...depositLogs].reverse()" :key="`${log.ts}-${idx}`">
                     [{{ log.ts }}] {{ log.message }}
                   </div>
                 </div>
@@ -644,7 +644,16 @@
 
               <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_1fr]">
                 <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
-                  <div class="text-xs font-semibold text-brand-700">交易所配置</div>
+                  <div class="flex items-center justify-between">
+                    <div class="text-xs font-semibold text-brand-700">交易所配置</div>
+                    <button
+                      class="rounded-md border border-brand-200 px-2 py-1 text-[11px] text-brand-700"
+                      :disabled="exchangeAssetsLoading"
+                      @click="loadExchangeAssets"
+                    >
+                      {{ exchangeAssetsLoading ? "查询中..." : "查询交易所余额" }}
+                    </button>
+                  </div>
                   <div class="mt-3 space-y-2 text-sm">
                     <select v-model="exchangeConfig.name" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
                       <option value="">选择交易所</option>
@@ -652,7 +661,19 @@
                     </select>
                     <input v-model="exchangeConfig.apiKey" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="API Key" />
                     <input v-model="exchangeConfig.apiSecret" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="API Secret" />
-                    <input v-model="exchangeConfig.ipWhitelist" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm" placeholder="IP 白名单（逗号分隔）" />
+                    <div class="rounded-lg border border-brand-200 bg-white/80 px-3 py-2 text-sm text-brand-700">
+                      本机 IP：{{ exchangePublicIp || "获取中..." }}
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-2 text-xs text-brand-500">
+                    <div v-if="exchangeAssetsStatus">{{ exchangeAssetsStatus }}</div>
+                    <div v-if="exchangeAssets.length" class="rounded-lg border border-brand-100 bg-white/70 p-2 text-[11px]">
+                      <div v-for="asset in exchangeAssets" :key="asset.coin" class="flex items-center justify-between py-1">
+                        <span class="text-brand-700">{{ asset.coin }}</span>
+                        <span>可用 {{ asset.free }}</span>
+                        <span>提现 {{ asset.withdrawEnable ? "Yes" : "No" }}</span>
+                      </div>
+                    </div>
                   </div>
                   <div class="mt-3 text-xs text-brand-500">用于交易所批量提现/充值配置。</div>
                 </div>
@@ -660,6 +681,16 @@
                 <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
                   <div class="text-xs font-semibold text-brand-700">交易所提现参数</div>
                   <div class="mt-3 space-y-2 text-sm">
+                    <label class="text-xs text-brand-500">币种 / 网络</label>
+                    <div class="flex items-center gap-2">
+                      <select v-model="depositAsset" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
+                        <option value="USDT">USDT</option>
+                        <option value="USDC">USDC</option>
+                      </select>
+                      <select v-model="depositNetwork" class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
+                        <option value="BSC">BSC (BEP20)</option>
+                      </select>
+                    </div>
                     <label class="text-xs text-brand-500">每笔延迟（秒）</label>
                     <input
                       v-model.number="depositDelaySec"
@@ -686,10 +717,12 @@
                         placeholder="最大金额"
                       />
                     </div>
-                    <button class="btn-primary mt-3 w-full text-base" @click="confirmDeposit">开始</button>
+                    <button class="btn-primary mt-3 w-full text-base" @click="confirmDeposit" :disabled="depositRunning">
+                      {{ depositRunning ? "执行中..." : "开始" }}
+                    </button>
                   </div>
                   <div class="mt-3 text-xs text-brand-500">
-                    充值将以“交易所提现”形式转入 代理地址，可设置秒级延迟与金额区间随机。
+                    充值将以“交易所提现”形式转入 代理地址，可设置币种/网络、延迟与金额区间随机。
                   </div>
                 </div>
               </div>
@@ -707,8 +740,7 @@
                         </th>
                         <th class="px-3 py-2 text-left">#</th>
                         <th class="px-3 py-2 text-left">钱包地址</th>
-                        <th class="px-3 py-2 text-left">代理地址</th>
-                        <th class="px-3 py-2 text-left">充值地址</th>
+                        <th class="px-3 py-2 text-left">桥接地址</th>
                         <th class="px-3 py-2 text-left">余额</th>
                       </tr>
                     </thead>
@@ -724,27 +756,14 @@
                           </button>
                         </td>
                         <td class="px-3 py-2 text-brand-600">
-                          <button class="text-left hover:text-brand-700" @click="copyText(row.proxyAddress)">
-                            {{ maskAddress(row.proxyAddress) }}
+                          <button
+                            v-if="row.depositAddress"
+                            class="text-left hover:text-brand-700"
+                            @click="copyText(row.depositAddress)"
+                          >
+                            {{ maskAddress(row.depositAddress) }}
                           </button>
-                        </td>
-                        <td class="px-3 py-2">
-                          <div class="flex items-center gap-2">
-                            <span class="text-brand-600">{{ row.depositAddress ? maskAddress(row.depositAddress) : "-" }}</span>
-                            <button
-                              v-if="row.depositAddress"
-                              class="rounded-md border border-brand-200 px-2 py-1 text-[11px] text-brand-700"
-                              @click="copyText(row.depositAddress)"
-                              title="复制地址"
-                            >
-                              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" aria-hidden="true">
-                                <path
-                                  fill="currentColor"
-                                  d="M8 7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3V7Zm3-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-7ZM3 10a3 3 0 0 1 3-3h1v2H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h2v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-7Z"
-                                />
-                              </svg>
-                            </button>
-                          </div>
+                          <span v-else>未获取</span>
                         </td>
                       <td class="px-3 py-2">{{ row.balance === null ? "-" : row.balance.toFixed(2) }}</td>
                       </tr>
@@ -758,7 +777,7 @@
                   </div>
                   <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
                     <div v-if="depositLogs.length === 0" class="text-brand-400">暂无输出。</div>
-                    <div v-for="(log, idx) in depositLogs" :key="`${log.ts}-${idx}`">
+                    <div v-for="(log, idx) in [...depositLogs].reverse()" :key="`${log.ts}-${idx}`">
                       [{{ log.ts }}] {{ log.message }}
                     </div>
                   </div>
@@ -782,14 +801,10 @@
                     {{ balanceLoading ? "查询中..." : "查询余额" }}
                   </button>
                   <div class="flex flex-wrap items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs text-brand-700">
-                    <label class="flex items-center gap-2">
-                      <input type="radio" value="all" v-model="withdrawMode" />
-                      清空
-                    </label>
-                    <label class="flex items-center gap-2">
-                      <input type="radio" value="partial" v-model="withdrawMode" />
-                      部分
-                    </label>
+                    <select v-model="withdrawMode" class="rounded-md border border-brand-200 px-2 py-1 text-xs">
+                      <option value="all">清空</option>
+                      <option value="partial">部分</option>
+                    </select>
                     <div class="flex items-center gap-2">
                       <input
                         v-model.number="withdrawAmount"
@@ -808,15 +823,48 @@
                       </button>
                     </div>
                   </div>
-                  <button class="btn-outline" @click="openWithdrawConfig">
-                    配置转入地址
-                  </button>
                   <button class="btn-primary" @click="bulkWithdraw">
                     批量提现
                   </button>
                 </div>
               </div>
 
+              <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3">
+                <div class="text-xs font-semibold text-brand-800">转入地址配置</div>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-brand-800">
+                  <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
+                    <input type="radio" value="many-to-many" v-model="transferMode" />
+                    多转多
+                  </label>
+                  <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
+                    <input type="radio" value="many-to-one" v-model="transferMode" />
+                    多转一
+                  </label>
+                </div>
+                <div class="mt-3">
+                  <div v-if="transferMode === 'many-to-many'">
+                    <p class="text-xs text-brand-700">多转多：每行一个转入地址，或 index,address。</p>
+                    <textarea
+                      v-model="withdrawImportText"
+                      class="mt-3 h-40 w-full rounded-xl border border-brand-200 p-3 text-xs"
+                      placeholder="0x...\n0x..."
+                    ></textarea>
+                  </div>
+                  <div v-else>
+                    <p class="text-xs text-brand-700">多转一：填写单一转入地址。</p>
+                    <input
+                      v-model="singleTargetAddress"
+                      class="mt-3 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+                      placeholder="目标地址"
+                    />
+                  </div>
+                </div>
+                <div class="mt-4 flex items-center justify-end gap-2">
+                  <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
+                    应用配置
+                  </button>
+                </div>
+              </div>
 
               <div class="mt-3 space-y-3">
                   <div class="table-shell max-h-[560px] overflow-auto">
@@ -885,7 +933,7 @@
                     </div>
                     <div class="max-h-[120px] space-y-1 overflow-auto font-mono">
                       <div v-if="withdrawLogs.length === 0" class="text-brand-400">暂无输出。</div>
-                      <div v-for="(log, idx) in withdrawLogs" :key="`${log.ts}-${idx}`">
+                      <div v-for="(log, idx) in [...withdrawLogs].reverse()" :key="`${log.ts}-${idx}`">
                         [{{ log.ts }}] {{ log.message }}
                       </div>
                     </div>
@@ -1189,53 +1237,6 @@
     </div>
   </div>
 
-  <div v-if="showWithdrawConfig" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" @click.self="showWithdrawConfig = false">
-    <div class="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-2xl border border-brand-100 bg-white p-6 shadow-[0_24px_60px_rgba(7,20,60,0.35)]">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display text-lg text-brand-900">转入地址配置</h2>
-        <button class="text-sm text-brand-500" @click="showWithdrawConfig = false">关闭</button>
-      </div>
-      <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3">
-        <div class="text-xs font-semibold text-brand-800">模式选择</div>
-        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-brand-800">
-          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
-            <input type="radio" value="many-to-many" v-model="transferMode" />
-            多转多
-          </label>
-          <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
-            <input type="radio" value="many-to-one" v-model="transferMode" />
-            多转一
-          </label>
-        </div>
-      </div>
-      <div class="mt-4">
-        <div v-if="transferMode === 'many-to-many'">
-          <p class="text-xs text-brand-700">多转多：每行一个转入地址，或 index,address。</p>
-          <textarea
-            v-model="withdrawImportText"
-            class="mt-3 h-48 w-full rounded-xl border border-brand-200 p-3 text-xs"
-            placeholder="0x...\n0x..."
-          ></textarea>
-        </div>
-        <div v-else>
-          <p class="text-xs text-brand-700">多转一：填写单一转入地址。</p>
-          <input
-            v-model="singleTargetAddress"
-            class="mt-3 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-            placeholder="目标地址"
-          />
-        </div>
-      </div>
-      <div class="mt-4 flex items-center justify-end gap-2">
-        <button class="rounded-lg border border-brand-200 px-4 py-2 text-sm text-brand-700" @click="showWithdrawConfig = false">
-          取消
-        </button>
-        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
-          应用配置
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -1255,7 +1256,6 @@ const importText = ref("");
 const showImport = ref(false);
 const showPairs = ref(false);
 const showFlow = ref(false);
-const showWithdrawConfig = ref(false);
 const showExecutionNotice = ref(false);
 const showIntro = ref(false);
 const useProxy = ref(true);
@@ -1295,6 +1295,7 @@ onMounted(() => {
       decryptVault(keyBytes, parsed).then(hydrateWalletsFromVault).catch(() => {});
     } catch {}
   }
+  loadExchangePublicIp();
 });
 
 const readWalletIpCache = () => {
@@ -1369,6 +1370,9 @@ const pairConfigAmount = ref<number | null>(null);
 const depositDelaySec = ref(0);
 const depositAmountMin = ref<number | null>(null);
 const depositAmountMax = ref<number | null>(null);
+const depositAsset = ref("USDT");
+const depositNetwork = ref("BSC");
+const depositRunning = ref(false);
 const withdrawImportText = ref("");
 const withdrawMode = ref<"all" | "partial">("all");
 const withdrawAmount = ref<number | null>(null);
@@ -1376,8 +1380,12 @@ const exchangeConfig = reactive({
   name: "",
   apiKey: "",
   apiSecret: "",
-  ipWhitelist: "",
 });
+const exchangeAssets = ref<Array<{ coin: string; free: string; withdrawEnable: boolean }>>([]);
+const exchangeAssetsLoading = ref(false);
+const exchangeAssetsStatus = ref("");
+const exchangePublicIp = ref("");
+const exchangePublicIpLoading = ref(false);
 const depositStatus = ref("");
 const depositLogs = ref<LogEntry[]>([]);
 const withdrawStatus = ref("");
@@ -2056,10 +2064,6 @@ const openPairs = () => {
   showPairs.value = true;
 };
 
-const openWithdrawConfig = () => {
-  showWithdrawConfig.value = true;
-};
-
 const refreshBalances = async () => {
   const targets = wallets.filter((wallet) => wallet.selected);
   if (targets.length === 0) {
@@ -2333,11 +2337,31 @@ const pickDepositAmount = (min: number, max: number) => {
   return Number((min + Math.random() * (max - min)).toFixed(2));
 };
 
-const confirmDeposit = () => {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const confirmDeposit = async () => {
   const targets = fundRows.value.filter((row) => row.selected);
   if (targets.length === 0) {
     depositStatus.value = "未选择 Fund 地址，无法开始。";
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: "未选择 Fund 地址，无法开始。" });
+    return;
+  }
+  const missingBridge = targets.filter((row) => !row.depositAddress);
+  if (missingBridge.length > 0) {
+    depositStatus.value = "请先获取桥接地址后再充值。";
+    depositLogs.value.push({
+      ts: new Date().toLocaleTimeString(),
+      message: "请先点击“获取充值桥接地址”，提现到桥接账户会自动转入代理账户。",
+    });
+    return;
+  }
+  if (exchangeConfig.name !== "binance") {
+    depositStatus.value = "请先选择 Binance 交易所。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
+    return;
+  }
+  if (!exchangeConfig.apiKey.trim() || !exchangeConfig.apiSecret.trim()) {
+    depositStatus.value = "请填写 Binance API Key 与 Secret。";
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
     return;
   }
   if (!depositAmountMin.value || !depositAmountMax.value || depositAmountMin.value <= 0 || depositAmountMax.value <= 0) {
@@ -2350,18 +2374,70 @@ const confirmDeposit = () => {
     depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: depositStatus.value });
     return;
   }
-  depositStatus.value = `开始执行交易所提现：${targets.length} 个地址，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`;
+  depositRunning.value = true;
+  depositStatus.value = `开始执行交易所提现：${targets.length} 个地址，${depositAsset.value}/${depositNetwork.value}，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`;
   depositLogs.value.push({
     ts: new Date().toLocaleTimeString(),
-    message: `开始执行：${targets.length} 个地址，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`,
+    message: `开始执行：${targets.length} 个地址，${depositAsset.value}/${depositNetwork.value}，延迟 ${depositDelaySec.value}s，金额区间 ${depositAmountMin.value}-${depositAmountMax.value}`,
   });
-  targets.forEach((row, idx) => {
-    const amount = pickDepositAmount(depositAmountMin.value as number, depositAmountMax.value as number);
+  try {
+    const balances = await fetchBinanceBalances({
+      apiKey: exchangeConfig.apiKey.trim(),
+      apiSecret: exchangeConfig.apiSecret.trim(),
+      asset: depositAsset.value,
+    });
     depositLogs.value.push({
       ts: new Date().toLocaleTimeString(),
-      message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.proxyAddress)} 金额 ${amount} 已提交`,
+      message: `${balances.asset} 现货余额 free=${balances.spotFree} locked=${balances.spotLocked}`,
     });
-  });
+    depositLogs.value.push({
+      ts: new Date().toLocaleTimeString(),
+      message: `${balances.asset} 资金余额 free=${balances.fundingFree}`,
+    });
+    const total = Number(balances.spotFree) + Number(balances.fundingFree);
+    if (!Number.isFinite(total) || total <= 0) {
+      depositLogs.value.push({
+        ts: new Date().toLocaleTimeString(),
+        message: `${balances.asset} 可用余额不足，已停止执行。`,
+      });
+      depositRunning.value = false;
+      depositPaused.value = false;
+      return;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: `余额查询失败：${message}` });
+  }
+  for (let idx = 0; idx < targets.length; idx += 1) {
+    const row = targets[idx];
+    const amount = pickDepositAmount(depositAmountMin.value as number, depositAmountMax.value as number);
+    try {
+      const result = await requestBinanceWithdraw({
+        apiKey: exchangeConfig.apiKey.trim(),
+        apiSecret: exchangeConfig.apiSecret.trim(),
+        coin: depositAsset.value,
+        network: depositNetwork.value,
+        address: row.depositAddress,
+        amount,
+        walletType: 0,
+      });
+      depositLogs.value.push({
+        ts: new Date().toLocaleTimeString(),
+        message: `#${idx + 1} ${maskAddress(row.address)} -> ${maskAddress(row.depositAddress)} 金额 ${amount} 已提交${result?.id ? `，订单 ${result.id}` : ""}`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      depositLogs.value.push({
+        ts: new Date().toLocaleTimeString(),
+        message: `#${idx + 1} ${maskAddress(row.address)} 提现失败：${message}`,
+      });
+    }
+    if (depositDelaySec.value > 0 && idx < targets.length - 1) {
+      await sleep(depositDelaySec.value * 1000);
+    }
+  }
+  depositRunning.value = false;
+  depositLogs.value.push({ ts: new Date().toLocaleTimeString(), message: "执行结束。" });
 };
 
 const clearDepositLogs = () => {
@@ -2370,6 +2446,55 @@ const clearDepositLogs = () => {
 
 const clearWithdrawLogs = () => {
   withdrawLogs.value = [];
+};
+
+const loadExchangePublicIp = async () => {
+  if (exchangePublicIpLoading.value) return;
+  exchangePublicIpLoading.value = true;
+  try {
+    exchangePublicIp.value = await fetchPublicIp();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    exchangePublicIp.value = "";
+    exchangeAssetsStatus.value = `外网IP获取失败：${message}`;
+  } finally {
+    exchangePublicIpLoading.value = false;
+  }
+};
+
+const loadExchangeAssets = async () => {
+  if (exchangeAssetsLoading.value) return;
+  if (exchangeConfig.name !== "binance") {
+    exchangeAssetsStatus.value = "请先选择 Binance 交易所。";
+    return;
+  }
+  if (!exchangeConfig.apiKey.trim() || !exchangeConfig.apiSecret.trim()) {
+    exchangeAssetsStatus.value = "请先填写 Binance API Key 与 Secret。";
+    return;
+  }
+  exchangeAssetsLoading.value = true;
+  exchangeAssetsStatus.value = "查询中...";
+  try {
+    const data = await fetchBinanceAssets({
+      apiKey: exchangeConfig.apiKey.trim(),
+      apiSecret: exchangeConfig.apiSecret.trim(),
+    });
+    const targetCoins = new Set(["USDT", "USDC"]);
+    const filtered = data
+      .filter((item: any) => targetCoins.has(String(item?.coin || "").toUpperCase()))
+      .map((item: any) => ({
+        coin: String(item?.coin || ""),
+        free: String(item?.free ?? item?.available ?? "0"),
+        withdrawEnable: Boolean(item?.withdrawEnable),
+      }));
+    exchangeAssets.value = filtered;
+    exchangeAssetsStatus.value = filtered.length ? "查询成功。" : "未查询到 USDT/USDC 资产。";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    exchangeAssetsStatus.value = `查询失败：${message}`;
+  } finally {
+    exchangeAssetsLoading.value = false;
+  }
 };
 
 const bulkWithdraw = () => {
@@ -2445,7 +2570,6 @@ const applyWithdrawAddresses = () => {
     withdrawStatus.value = "多转一目标地址已保存。";
     withdrawLogs.value.push({ ts: new Date().toLocaleTimeString(), message: withdrawStatus.value });
   }
-  showWithdrawConfig.value = false;
 };
 
 const selectAllPairs = (value: boolean) => {
@@ -2611,6 +2735,64 @@ const fetchDepositBridgeAddress = async (address: string) => {
   const evm = data?.address?.evm;
   if (!evm) throw new Error("充值桥接地址返回为空");
   return evm as string;
+};
+
+const fetchBinanceAssets = async (payload: { apiKey: string; apiSecret: string }) => {
+  const response = await fetch("/api/binance-assets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data?.msg || data?.message || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchBinanceBalances = async (payload: { apiKey: string; apiSecret: string; asset: string }) => {
+  const response = await fetch("/api/binance-balances", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data?.msg || data?.message || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return data as { asset: string; spotFree: number; spotLocked: number; fundingFree: number };
+};
+
+const fetchPublicIp = async () => {
+  const response = await fetch("/api/public-ip");
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json().catch(() => ({}));
+  if (!data?.ip) throw new Error("IP 获取失败");
+  return String(data.ip);
+};
+
+const requestBinanceWithdraw = async (payload: {
+  apiKey: string;
+  apiSecret: string;
+  coin: string;
+  network: string;
+  address: string;
+  amount: number;
+  walletType?: number;
+}) => {
+  const response = await fetch("/api/binance-withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data?.msg || data?.message || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return data as { id?: string; success?: boolean };
 };
 
 const fetchPositions = async (address: string) => {

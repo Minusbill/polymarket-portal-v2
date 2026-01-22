@@ -2,7 +2,73 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    {
+      name: "local-binance-withdraw",
+      configureServer(server) {
+        server.middlewares.use("/api/binance-withdraw", async (req, res) => {
+          try {
+            const module = await import("./api/binance-withdraw.js");
+            const handler = module.default;
+            await handler(req, res);
+          } catch (error) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({ message: error instanceof Error ? error.message : String(error) }));
+          }
+        });
+      },
+    },
+    {
+      name: "local-binance-assets",
+      configureServer(server) {
+        server.middlewares.use("/api/binance-assets", async (req, res) => {
+          try {
+            const module = await import("./api/binance-assets.js");
+            const handler = module.default;
+            await handler(req, res);
+          } catch (error) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({ message: error instanceof Error ? error.message : String(error) }));
+          }
+        });
+      },
+    },
+    {
+      name: "local-binance-balances",
+      configureServer(server) {
+        server.middlewares.use("/api/binance-balances", async (req, res) => {
+          try {
+            const module = await import("./api/binance-balances.js");
+            const handler = module.default;
+            await handler(req, res);
+          } catch (error) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({ message: error instanceof Error ? error.message : String(error) }));
+          }
+        });
+      },
+    },
+    {
+      name: "local-public-ip",
+      configureServer(server) {
+        server.middlewares.use("/api/public-ip", async (req, res) => {
+          try {
+            const module = await import("./api/public-ip.js");
+            const handler = module.default;
+            await handler(req, res);
+          } catch (error) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.end(JSON.stringify({ message: error instanceof Error ? error.message : String(error) }));
+          }
+        });
+      },
+    },
+  ],
   resolve: {
     alias: {
       buffer: "buffer",
