@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@polymarket/builder-relayer-client": "^0.0.8",
     "@polymarket/builder-signing-sdk": "^0.0.8",
     "@polymarket/clob-client": "^5.2.1",
     "@polymarket/order-utils": "^3.0.1",
@@ -16,6 +17,7 @@
     "buffer": "^6.0.3",
     "dotenv": "^17.2.3",
     "ethers": "^5.8.0",
+    "viem": "^2.37.6",
     "vue": "^3.4.27"
   },
   "devDependencies": {
