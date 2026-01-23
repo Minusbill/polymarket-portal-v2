@@ -202,7 +202,6 @@ import { computed, onMounted, provide, reactive, ref, watch } from "vue";
 import type { ExecutionPlan, LogEntry, MarketInfo, PositionRow, Wallet, WalletPair } from "./types";
 import { maskAddress, parseSlug } from "./utils";
 import { formatU, depthWidth } from "./utils/uiHelpers";
-import { withdrawUsdcFromSafeClient } from "./services/safeWithdraw";
 import { sortAsks, sortBids } from "./utils/orderBookSort";
 import { hidePopupForToday, shouldShowPopup } from "./utils/popupStorage";
 import { fetchBinanceAssets, fetchBinanceBalances, fetchPublicIp, requestBinanceWithdraw } from "./services/binanceApi";
@@ -214,13 +213,7 @@ import {
   fetchWalletLeaderboard,
   fetchProxyProfile,
 } from "./services/polymarketApi";
-import {
-  fetchProxyAddressOnChain,
-  fetchUsdcEBalance,
-  getDefaultPolygonRpc,
-  setActivePolygonRpc,
-  setPolygonRpcList,
-} from "./services/balanceService";
+import { fetchProxyAddressOnChain, fetchUsdcEBalance } from "./services/balanceService";
 import { normalizeIndexValue, normalizeIpValue } from "./utils/walletFormat";
 import { applyWalletIpCache, buildWalletIpMap, saveWalletIpMap } from "./services/walletIpCache";
 import { decryptVault, getStoredVaultKey, hydrateWalletsFromVault, saveVault } from "./services/walletVault";
@@ -349,14 +342,6 @@ const depositStatus = ref("");
 const depositLogs = ref<LogEntry[]>([]);
 const withdrawStatus = ref("");
 const withdrawLogs = ref<LogEntry[]>([]);
-const polygonRpcOptions = ref<string[]>([
-  "https://poly.api.pocket.network",
-  "https://rpc-mainnet.matic.quiknode.pro",
-  "https://1rpc.io/matic",
-]);
-const customPolygonRpc = ref("");
-const selectedPolygonRpc = ref(polygonRpcOptions.value[0]);
-const useCustomPolygonRpc = ref(false);
 const ipNameOptions = computed(() => {
   const set = new Set<string>();
   wallets.forEach((wallet) => {
@@ -738,26 +723,9 @@ const {
   withdrawImportText,
   transferMode,
   singleTargetAddress,
-  getDefaultPolygonRpc,
   fetchUsdcEBalance,
-  withdrawUsdcFromSafeClient: withdrawUsdcFromSafeClient,
   maskAddress,
 });
-
-const applyPolygonRpc = () => {
-  setPolygonRpcList(polygonRpcOptions.value);
-  if (useCustomPolygonRpc.value) {
-    const value = customPolygonRpc.value.trim();
-    if (!value) return;
-    setActivePolygonRpc(value);
-    pushLog(`已切换 RPC：${value}`);
-    return;
-  }
-  const value = selectedPolygonRpc.value;
-  if (!value) return;
-  setActivePolygonRpc(value);
-  pushLog(`已切换 RPC：${value}`);
-};
 
 const { execute, clearLogs } = useExecutionActions({
   execution,
@@ -798,8 +766,6 @@ onMounted(() => {
     } catch {}
   }
   loadExchangePublicIp();
-  setPolygonRpcList(polygonRpcOptions.value);
-  setActivePolygonRpc(selectedPolygonRpc.value);
 });
 
 watch(darkMode, (value) => {
@@ -881,10 +847,6 @@ const portalContext = {
     withdrawRows,
     withdrawHeaderChecked,
     withdrawLogs,
-    polygonRpcOptions,
-    customPolygonRpc,
-    selectedPolygonRpc,
-    useCustomPolygonRpc,
   },
   actions: {
     openImport,
@@ -917,7 +879,6 @@ const portalContext = {
     toggleWithdrawHeader,
     clearWithdrawLogs,
     bulkWithdraw,
-    applyPolygonRpc,
   },
   utils: {
     maskAddress,

@@ -123,33 +123,13 @@
       </div>
       <div class="space-y-3">
         <div class="rounded-2xl border border-brand-100 bg-white p-3">
-          <div class="text-xs font-semibold text-brand-800">RPC 选择</div>
+          <div class="text-xs font-semibold text-brand-800">Relayer 服务</div>
           <div class="mt-2 space-y-2 text-xs text-brand-600">
-            <div class="flex flex-wrap items-center gap-3 text-xs text-brand-700">
-              <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2" @click="applyPolygonRpc">
-                <input type="radio" :value="false" v-model="useCustomPolygonRpc" />
-                默认
-              </label>
-              <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2" @click="applyPolygonRpc">
-                <input type="radio" :value="true" v-model="useCustomPolygonRpc" />
-                自定义
-              </label>
+            <div class="rounded-lg border border-brand-200 px-3 py-2 text-xs">
+              {{ relayerServiceUrl }}
             </div>
-            <select
-              v-model="selectedPolygonRpc"
-              class="w-full rounded-lg border border-brand-200 px-3 py-2 text-xs"
-              :disabled="useCustomPolygonRpc"
-              @change="applyPolygonRpc"
-            >
-              <option v-for="rpc in polygonRpcOptions" :key="rpc" :value="rpc">{{ rpc }}</option>
-            </select>
-            <input
-              v-if="useCustomPolygonRpc"
-              v-model="customPolygonRpc"
-              class="w-full rounded-lg border border-brand-200 px-3 py-2 text-xs"
-              placeholder="自定义 RPC URL"
-              @input="applyPolygonRpc"
-            />
+            <div class="text-[11px] text-brand-500">
+              relayer-service 负责签名转发（builder creds 在服务端 .env）。\n            </div>
           </div>
         </div>
         <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
@@ -202,6 +182,8 @@ if (!portal) {
   throw new Error("Portal context missing");
 }
 
+const relayerServiceUrl = (import.meta as any).env?.VITE_RELAYER_SERVICE_URL || "未配置";
+
 const { state, actions, utils } = portal;
 const {
   balanceLoading,
@@ -214,10 +196,6 @@ const {
   withdrawHeaderChecked,
   withdrawLogs,
   withdrawStatus,
-  polygonRpcOptions,
-  customPolygonRpc,
-  selectedPolygonRpc,
-  useCustomPolygonRpc,
 } = state;
 const {
   refreshWithdrawBalances,
@@ -226,7 +204,6 @@ const {
   toggleWithdrawHeader,
   clearWithdrawLogs,
   bulkWithdraw,
-  applyPolygonRpc,
 } = actions;
 const { maskAddress, copyText } = utils;
 </script>

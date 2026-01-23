@@ -1,7 +1,6 @@
 import type { Ref } from "vue";
-import { ethers, Wallet as EthersWallet } from "ethers";
 import type { LogEntry, Wallet } from "../types";
-import type { withdrawUsdcFromSafeClient } from "../services/safeWithdraw";
+import { relayerWithdrawToken } from "../services/relayerWithdraw";
 
 const pushWithdrawLog = (logs: Ref<LogEntry[]>, message: string) => {
   logs.value.push({ ts: new Date().toLocaleTimeString(), message });
@@ -49,9 +48,7 @@ type Dependencies = {
   withdrawImportText: Ref<string>;
   transferMode: Ref<"many-to-many" | "many-to-one">;
   singleTargetAddress: Ref<string>;
-  getDefaultPolygonRpc: () => string;
   fetchUsdcEBalance: (address: string) => Promise<number>;
-  withdrawUsdcFromSafeClient: typeof withdrawUsdcFromSafeClient;
   maskAddress: (value: string) => string;
 };
 
@@ -209,10 +206,6 @@ export const useWithdrawActions = (deps: Dependencies) => {
         return;
       }
     }
-    const provider = new ethers.providers.JsonRpcProvider(deps.getDefaultPolygonRpc(), {
-      chainId: 137,
-      name: "polygon",
-    });
     deps.withdrawStatus.value = `开始批量提现：${targets.length} 个代理地址，${
       deps.withdrawMode.value === "partial" ? "部分金额" : "清空"
     }，${deps.transferMode.value === "many-to-one" ? "多转一" : "多转多"}`;
@@ -291,17 +284,20 @@ export const useWithdrawActions = (deps: Dependencies) => {
         `#${idx + 1} ${deps.maskAddress(row.proxyAddress)} -> ${deps.maskAddress(toAddress)} 准备提现 ${amount}`
       );
       try {
-        const owner = new EthersWallet(wallet.privateKey, provider);
-        const txHash = await deps.withdrawUsdcFromSafeClient(
-          owner,
-          row.proxyAddress,
+        const txHash = await relayerWithdrawToken({
+          privateKey: wallet.privateKey,
+          builderApiKey: "",
+          builderSecret: "",
+          builderPassphrase: "",
+          relayerUrl: "",
           toAddress,
           amount,
-          (message) => pushWithdrawLog(deps.withdrawLogs, `#${idx + 1} ${message}`)
-        );
+          tokenAddress: undefined,
+          logger: (message) => pushWithdrawLog(deps.withdrawLogs, `#${idx + 1} ${message}`),
+        });
         pushWithdrawLog(
           deps.withdrawLogs,
-          `#${idx + 1} ${deps.maskAddress(row.proxyAddress)} -> ${deps.maskAddress(toAddress)} 提现 ${amount} 成功，tx ${txHash}`
+          `#${idx + 1} ${deps.maskAddress(row.proxyAddress)} -> ${deps.maskAddress(toAddress)} 提现 ${amount} 成功，tx ${txHash || "无 hash"}`
         );
       } catch (error) {
         const message = formatWithdrawError(error);
