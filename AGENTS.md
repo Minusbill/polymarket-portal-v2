@@ -1,48 +1,147 @@
-# Polymarket Portal - 代理要求
+# Polymarket Portal - Agent Guide
 
-## 总体
-- 本文件为项目内的权威规则。
-- 优先在 `src/App.vue` 内做最小改动，除非确实需要新模块。
+## Scope
+- This file is authoritative for repository behavior.
+- Prefer minimal changes in `src/App.vue` unless a new module is required.
+- Keep existing UI wording unless the product spec asks otherwise.
+- No Cursor/Copilot instruction files are present in this repo.
 
-## 钱包管理
-- 导入私钥后用 `ethers` (`Wallet`) 解析地址。
-- 不生成模拟钱包，初始为空，导入后才有数据。
-- 导出 CSV 仅包含 `privateKey`，表头为 `privateKey`。
-- 私钥本地缓存使用 AES-GCM 对称加密；加密数据与密钥存入 `localStorage`（不使用口令）。
-- 页面加载后自动解密并恢复钱包。
+## Commands
+- Install: `npm install`
+- Dev server: `npm run dev`
+- Production build: `npm run build`
+- Preview build: `npm run preview`
+- Lint: not configured (no ESLint/Prettier scripts in `package.json`).
+- Tests: not configured (no test runner or test files found).
+- Single test: not available until a test runner is added.
+- Script runner: `npx tsx src/scripts/<file>.ts` (scripts read `.env` via dotenv).
 
-## 市场加载
-- 通过 `/api/market?slug=...` 按 slug 加载市场（Vite 代[createProxyWalletAndApiKey.ts](..%2F..%2F..%2FLibrary%2FContainers%2Fcom.tencent.xinWeChat%2FData%2FDocuments%2Fxwechat_files%2Fminus502_db68%2Ftemp%2FRWTemp%2F2026-01%2F33e1b2de697d8fa061f5e54453ea571e%2FcreateProxyWalletAndApiKey.ts)理到 gamma `/markets`）。
-- 通过 `/api/book?token_id=...` 拉取深度（Vite 代理到 clob `/book`）。
-- 仅手动刷新，不自动刷新。
-- 订单簿失败要报错，不插入假深度。
-- 提供“进入市场”超链接按钮。
+## Project Layout
+- `src/main.ts` mounts the Vue app and applies the Buffer polyfill.
+- `src/App.vue` owns the main layout and page switching.
+- `src/pages/` contains full-page views (wallets, workbench, positions, deposit, withdraw).
+- `src/components/` contains reusable UI and modal components.
+- `src/composables/` contains action hooks such as `useXxxActions`.
+- `src/services/` handles API calls, wallet vault, balances, and side effects.
+- `src/utils/` holds stateless helpers (formatting, parsing, toast).
+- `src/shared/` stores chain ABIs, config, and script utilities.
+- `src/data/` contains mock data utilities (use only when explicitly needed).
+- `src/styles.css` defines Tailwind layers and theme tokens.
 
-## 盘口深度
-- 默认只显示卖单（可切换显示买单）。
-- 显示买/卖前三档（最优→第三）。
-- 每档显示价值（U）。
-- 深度条：买单绿色、卖单红色，夜间模式对比要更强。
-- 只显示卖单时，标题合计显示“卖一合计”。
+## Vue + TypeScript Conventions
+- Use Vue 3 Composition API with `<script setup lang="ts">`.
+- Prefer `ref`/`reactive` with explicit generic types for state.
+- Centralize shared types in `src/types.ts` and import them.
+- Use `import type` for type-only imports.
+- Keep imports grouped: external packages first, then local modules.
+- Components use PascalCase filenames and imports.
+- Composables are named `useXxxActions` and accept a dependency object.
+- Use `number | null` for optional numeric values; avoid `undefined`.
+- Prefer `const` over `let`; avoid `var`.
+- Favor small helpers in `src/utils/` over inline duplication.
+- Use `computed` for derived state and `watch` for side effects.
+- Use `Array<T>` or `Record<string, T>` for complex collections.
+- Prefer explicit union string types for statuses (ex: `"OPEN" | "RESOLVED"`).
 
-## 执行参数
-- 支持统一数量 + 每对单独数量（弹窗配置）。
-- 钱包对列表显示“单独/统一”的标记。
-- 支持执行顺序：YES→NO 或 NO→YES。
-- 支持随机间隔范围（最小/最大，要求 max >= min）。
-- 预计交易价值按单独数量优先计算。
+## Naming and Types
+- Variables and functions use `camelCase`; classes and components use `PascalCase`.
+- Constants use `UPPER_SNAKE_CASE` when truly global or static.
+- Service files are `camelCase` and export named functions.
+- Component props are typed via `defineProps<{ ... }>()`.
+- Component emits use a `type Emits` + `defineEmits<Emits>()` pattern.
+- Prefer `type` aliases over `interface` (matches existing usage).
+- Avoid `any`; use `unknown` with narrowing when needed.
+- Keep IDs as strings (see `Wallet`, `WalletPair`, `PositionRow` types).
+- Use `null` to mean "not loaded" rather than sentinel numbers.
 
-## 充值 / 提现
-- 充值/提现不需要说明弹窗。
-- 充值支持金额区间随机。
-- 查询余额仅针对选中行。
-- 表头勾选支持全选/全不选。
+## Formatting
+- Indentation is 2 spaces in `src/` Vue/TS files.
+- Use double quotes and semicolons (matches most frontend files).
+- Follow the local file style if a file already differs (scripts in `src/scripts/` use single quotes).
+- Keep lines readable; split long template attributes or arrays as needed.
+- Align multi-line object literals and arrays with trailing commas only if already present.
 
-## 弹窗规范
-- 仅保留必要弹窗（平台介绍/工作台说明/钱包对配置/钱包 IP 配置）。
-- 未明确要求不要新增自动弹窗。
+## Error Handling and Data Safety
+- Always check `response.ok` before reading JSON; throw `Error` with a user-facing message.
+- Guard JSON parsing with `try/catch` and return sane defaults.
+- For browser-only APIs (`window`, `localStorage`, `crypto`), guard with `typeof window !== "undefined"`.
+- Use early returns for validation failures and log/toast actionable messages.
+- Do not fabricate data on API failures; surface errors instead.
+- When parsing external input (CSV, URL), trim and normalize fields.
 
-## IP / 钱包关联
-- 每个钱包自带 `ipName`、`ipEndpoint` 字段。
-- 通过行内“配置”弹窗配置 IP。
-- 不使用单独的 IP 列表管理界面。
+## API and Services
+- Keep network logic inside `src/services/`; UI components should call service helpers.
+- Use `fetch` with `encodeURIComponent` and `URLSearchParams` for query strings.
+- Prefer Vite proxy routes (`/api/market`, `/api/book`, etc.) over hardcoded hosts.
+- Keep error strings user-facing and localized to existing tone.
+- Reuse balance utilities in `src/services/balanceService.ts` for on-chain calls.
+- Cache providers/contracts per RPC URL; do not recreate them on every call.
+
+## State and Storage
+- Wallets and pairs are reactive arrays; mutate via `splice` to preserve reactivity.
+- Persist secrets through `saveVault`/`decryptVault` in `src/services/walletVault.ts`.
+- Keep wallet IP config consistent with `src/services/walletIpCache.ts`.
+- Use `createToastHelpers` for user notifications instead of ad-hoc alerts.
+- Avoid mutating reactive objects outside Vue state helpers.
+
+## UI and Styling
+- Use Tailwind utility classes for layout; avoid inline styles.
+- Theme tokens live in `src/styles.css`; themes toggle via `theme-dark`/`theme-light`.
+- Keep modals in `src/components/` and pages in `src/pages/`.
+- Use `v-show` for page switching in `src/App.vue` to preserve state.
+- Keep table row selection state on each row object (`selected` boolean).
+
+## Domain Rules (must follow)
+### General
+- This file is authoritative for product behavior.
+- Prefer minimal changes in `src/App.vue` unless a new module is required.
+
+### Wallet Management
+- After importing a private key, parse the address with `ethers.Wallet`.
+- Do not create mock wallets; initial state must be empty until import.
+- CSV export must include only `privateKey` with header `privateKey`.
+- Local key caching uses AES-GCM symmetric encryption; store ciphertext and key in `localStorage` (no passphrase).
+- Decrypt and restore wallets automatically on page load.
+
+### Market Loading
+- Load markets by slug via `/api/market?slug=...` (Vite proxies to Gamma `/markets`).
+- Load order book depth via `/api/book?token_id=...` (Vite proxies to CLOB `/book`).
+- Refresh only on user action; no auto-refresh polling.
+- If order book fetch fails, surface the error and do not insert fake depth.
+- Provide an "进入市场" hyperlink button to the live market.
+
+### Order Book Depth
+- Default to showing asks (sell orders) only; allow toggling to bids.
+- Show top 3 levels for both bids and asks.
+- Each level shows the value in U.
+- Depth bars: green for bids, red for asks; ensure stronger contrast in dark mode.
+- When showing sell-only, the title total label must be "卖一合计".
+
+### Execution Parameters
+- Support a unified amount plus per-pair overrides (configured in a modal).
+- Wallet pair list shows a "单独/统一" marker for per-pair vs unified.
+- Support execution order YES→NO or NO→YES.
+- Support a random delay range with `max >= min`.
+- Estimated trade value uses the per-pair amount when present.
+
+### Deposit / Withdraw
+- Deposit and withdraw flows should not use explanatory modals.
+- Deposit supports random amount ranges.
+- Balance queries only apply to selected rows.
+- The table header checkbox toggles select all / select none.
+
+### Modal Rules
+- Keep only necessary modals (platform intro, workbench intro, wallet pair config, wallet IP config).
+- Do not add new auto-open modals unless explicitly requested.
+
+### IP / Wallet Association
+- Each wallet stores `ipName` and `ipEndpoint` fields.
+- Configure IP via the row-level modal; no separate IP list page.
+- Persist IP values alongside wallet import/export and vault storage.
+
+## Notes for Agents
+- The app is frontend-only and uses Vite dev server proxy rules in `vite.config.ts`.
+- Do not add backend services or mock data unless explicitly required.
+- Keep changes localized; prefer helpers over rewriting large templates.
+- When adding new state, align with existing `ref`/`reactive` patterns.
+- Update this file if you add lint/test tooling or new agent rules.
