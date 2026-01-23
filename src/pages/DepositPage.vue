@@ -113,8 +113,8 @@
 
     <div class="mt-3 space-y-3">
       <div class="table-shell max-h-[560px] overflow-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-brand-50 text-xs text-brand-500">
+        <table class="min-w-full text-[11px]">
+          <thead class="bg-brand-50 text-[9px] text-brand-500 uppercase font-bold tracking-wider">
             <tr>
               <th class="px-3 py-2 text-left">
                 <div class="flex items-center gap-2">
@@ -133,16 +133,16 @@
               <td class="px-3 py-2">
                 <input type="checkbox" v-model="row.selected" />
               </td>
-              <td class="px-3 py-2 text-xs text-brand-600">{{ row.index || "-" }}</td>
-              <td class="px-3 py-2 text-brand-600">
-                <button class="text-left hover:text-brand-700" @click="copyText(row.address)">
+              <td class="px-3 py-2 font-mono text-[10px] text-text-muted">{{ row.index || "-" }}</td>
+              <td class="px-3 py-2 font-mono text-neon-green font-medium text-[10px]">
+                <button class="text-left hover:text-neon-green-dark" @click="copyText(row.address)">
                   {{ maskAddress(row.address) }}
                 </button>
               </td>
-              <td class="px-3 py-2 text-brand-600">
+              <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
                 <button
                   v-if="row.depositAddress"
-                  class="text-left hover:text-brand-700"
+                  class="text-left hover:text-text-main"
                   @click="copyText(row.depositAddress)"
                 >
                   {{ maskAddress(row.depositAddress) }}

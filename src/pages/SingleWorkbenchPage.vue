@@ -8,13 +8,34 @@
             活跃工作台
           </h2>
         </div>
-        <button
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-panel-border-light hover:bg-panel-border text-text-muted hover:text-text-main text-[10px] font-mono rounded border border-panel-border transition-colors"
-          @click="refreshSingleMarket"
-        >
-          <span class="material-symbols-outlined text-sm">refresh</span>
-          刷新数据
-        </button>
+        <div class="flex items-center gap-2">
+          <input
+            v-model="singlePositionsSlugInput"
+            class="input-dark py-1.5 px-3 text-[10px] rounded w-48 font-mono"
+            placeholder="查询持仓：输入 slug"
+          />
+          <button
+            class="btn-outline text-[10px] uppercase tracking-wide"
+            @click="loadSinglePositionsBySlug"
+            :disabled="singlePositionsLoading"
+          >
+            持仓
+          </button>
+          <button
+            class="btn-outline text-[10px] uppercase tracking-wide"
+            @click="refreshSingleBalances"
+            :disabled="balanceLoading"
+          >
+            余额
+          </button>
+          <button
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-panel-border-light hover:bg-panel-border text-text-muted hover:text-text-main text-[10px] font-mono rounded border border-panel-border transition-colors"
+            @click="refreshSingleMarket"
+          >
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            刷新数据
+          </button>
+        </div>
       </div>
 
       <div class="glass-panel flex flex-col">
@@ -23,29 +44,7 @@
             <span class="material-symbols-outlined text-text-muted text-sm">account_balance_wallet</span>
             钱包选择
           </h3>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="singlePositionsSlugInput"
-              class="input-dark py-1 px-2 text-[10px] rounded w-40 font-mono"
-              placeholder="过滤钱包..."
-            />
-            <div class="flex rounded border border-panel-border p-0.5" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
-              <button
-                class="px-2 py-0.5 hover:bg-panel-border-light text-text-muted hover:text-text-main text-[9px] font-bold rounded transition-colors uppercase disabled:opacity-50"
-                @click="loadSinglePositionsBySlug"
-                :disabled="singlePositionsLoading"
-              >
-                持仓
-              </button>
-              <button
-                class="px-2 py-0.5 hover:bg-panel-border-light text-text-muted hover:text-text-main text-[9px] font-bold rounded transition-colors uppercase disabled:opacity-50"
-                @click="refreshSingleBalances"
-                :disabled="balanceLoading"
-              >
-                余额
-              </button>
-            </div>
-          </div>
+          <div class="flex items-center gap-2"></div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[11px] whitespace-nowrap">
@@ -158,25 +157,42 @@
           </div>
           <div>
             <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">随机延迟 (秒)</label>
-            <div class="flex items-center gap-2">
-              <input class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMin" />
+            <div class="flex items-center gap-3">
+              <input class="flex-1 min-w-0 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMin" />
               <span class="text-text-muted font-bold">-</span>
-              <input class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMax" />
+              <input class="flex-1 min-w-0 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMax" />
             </div>
           </div>
           <div>
             <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">金额范围 (USDC)</label>
-            <div class="flex items-center gap-2">
-              <div class="relative flex-1">
+            <div class="flex items-center gap-3">
+              <div class="relative flex-1 min-w-0">
                 <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
                 <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最小" type="number" v-model.number="singleAmountMin" />
               </div>
               <span class="text-text-muted font-bold">-</span>
-              <div class="relative flex-1">
+              <div class="relative flex-1 min-w-0">
                 <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
                 <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最大" type="number" v-model.number="singleAmountMax" />
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel p-3 h-1/3 flex flex-col min-h-0" :class="darkMode ? 'bg-[#0A0A0C] border-neon-green/20' : 'bg-white border-neon-green/10'">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-neon-green text-[10px] uppercase tracking-widest flex items-center gap-1.5 shadow-neon">
+            <span class="material-symbols-outlined text-sm">terminal</span>
+            执行输出
+          </h3>
+          <button class="text-text-muted hover:text-text-main text-[9px] transition-colors font-bold uppercase" @click="clearSingleLogs">清除日志</button>
+        </div>
+        <div class="flex-1 rounded border-t border-panel-border pt-2 font-mono text-[10px] overflow-y-auto custom-scrollbar text-text-muted">
+          <div v-if="singleLogs.length === 0" class="text-text-light">暂无输出。</div>
+          <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`" class="flex gap-2">
+            <span class="text-text-light">[{{ log.ts }}]</span>
+            <span class="text-text-main">{{ log.message }}</span>
           </div>
         </div>
       </div>
@@ -196,13 +212,12 @@
         <div class="flex gap-2">
           <input
             class="flex-1 input-dark rounded px-3 py-1.5 text-xs font-mono"
-            placeholder="polymarket.com/event/... 或 标识符"
+            placeholder="输入市场 slug"
             type="text"
             v-model="singleMarketInput"
           />
           <button
-            class="px-4 py-1.5 border border-panel-border text-text-main text-[10px] font-bold rounded shadow-sm transition-all uppercase tracking-wide"
-            :class="darkMode ? 'bg-[#1A1A1D] hover:bg-[#252529] hover:border-neon-green/50 text-white' : 'bg-panel-border-light hover:bg-brand-100 hover:border-neon-green/50'"
+            class="btn-outline text-[10px] uppercase tracking-wide"
             @click="loadSingleMarket"
           >
             加载
@@ -373,22 +388,6 @@
         </div>
       </div>
 
-      <div class="glass-panel p-3 h-1/3 flex flex-col min-h-0" :class="darkMode ? 'bg-[#0A0A0C] border-neon-green/20' : 'bg-white border-neon-green/10'">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold text-neon-green text-[10px] uppercase tracking-widest flex items-center gap-1.5 shadow-neon">
-            <span class="material-symbols-outlined text-sm">terminal</span>
-            系统日志
-          </h3>
-          <button class="text-text-muted hover:text-text-main text-[9px] transition-colors font-bold uppercase" @click="clearSingleLogs">清除日志</button>
-        </div>
-        <div class="flex-1 rounded border-t border-panel-border pt-2 font-mono text-[10px] overflow-y-auto custom-scrollbar text-text-muted">
-          <div v-if="singleLogs.length === 0" class="text-text-light">暂无输出。</div>
-          <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`" class="flex gap-2">
-            <span class="text-text-light">[{{ log.ts }}]</span>
-            <span class="text-text-main">{{ log.message }}</span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>

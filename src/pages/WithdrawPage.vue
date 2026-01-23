@@ -10,17 +10,14 @@
         <button class="btn-outline" @click="refreshWithdrawBalances" :disabled="balanceLoading">
           {{ balanceLoading ? "查询中..." : "查询余额" }}
         </button>
-        <button class="btn-primary" @click="bulkWithdraw">
-          批量提现
-        </button>
       </div>
     </div>
 
-    <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_600px]">
       <div class="space-y-3">
         <div class="table-shell max-h-[640px] overflow-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-brand-50 text-xs text-brand-500">
+          <table class="min-w-full text-[11px]">
+            <thead class="bg-brand-50 text-[9px] text-brand-500 uppercase font-bold tracking-wider">
               <tr>
                 <th class="px-3 py-2 text-left">
                   <div class="flex items-center gap-2">
@@ -48,14 +45,9 @@
                         :disabled="withdrawMode !== 'partial'"
                         class="w-20 rounded-md border border-brand-200 px-2 py-1 text-xs"
                         placeholder="批量金额"
+                        @input="applyWithdrawAmount"
+                        @change="applyWithdrawAmount"
                       />
-                      <button
-                        class="rounded-md border border-brand-200 px-2 py-1 text-[11px]"
-                        :disabled="withdrawMode !== 'partial'"
-                        @click="applyWithdrawAmount"
-                      >
-                        应用
-                      </button>
                     </div>
                   </div>
                 </th>
@@ -67,28 +59,28 @@
                 <td class="px-3 py-2">
                   <input type="checkbox" v-model="row.selected" />
                 </td>
-                <td class="px-3 py-2 text-xs text-brand-600">{{ row.index || "-" }}</td>
-                <td class="px-3 py-2 text-brand-600">
-                  <button class="text-left hover:text-brand-700" @click="copyText(row.address)">
+                <td class="px-3 py-2 font-mono text-[10px] text-text-muted">{{ row.index || "-" }}</td>
+                <td class="px-3 py-2 font-mono text-neon-green font-medium text-[10px]">
+                  <button class="text-left hover:text-neon-green-dark" @click="copyText(row.address)">
                     {{ maskAddress(row.address) }}
                   </button>
                 </td>
-                <td class="px-3 py-2 text-brand-600">
-                  <button class="text-left hover:text-brand-700" @click="copyText(row.proxyAddress)">
+                <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
+                  <button class="text-left hover:text-text-main" @click="copyText(row.proxyAddress)">
                     {{ maskAddress(row.proxyAddress) }}
                   </button>
                 </td>
-                <td class="px-3 py-2 text-brand-600">
+                <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
                   <button
                     v-if="row.withdrawAddress"
-                    class="text-left hover:text-brand-700"
+                    class="text-left hover:text-text-main"
                     @click="copyText(row.withdrawAddress)"
                   >
                     {{ maskAddress(row.withdrawAddress) }}
                   </button>
                   <span v-else class="text-brand-400">未配置</span>
                 </td>
-                <td class="px-3 py-2 text-xs text-brand-500">
+                <td class="px-3 py-2 text-[10px] text-text-muted font-mono">
                   <span>{{ row.ipName || "无" }}</span>
                   <span class="text-brand-300"> / </span>
                   <span class="text-[10px] text-brand-400">{{ row.ipEndpoint || "无" }}</span>
@@ -123,14 +115,9 @@
       </div>
       <div class="space-y-3">
         <div class="rounded-2xl border border-brand-100 bg-white p-3">
-          <div class="text-xs font-semibold text-brand-800">Relayer 服务</div>
-          <div class="mt-2 space-y-2 text-xs text-brand-600">
-            <div class="rounded-lg border border-brand-200 px-3 py-2 text-xs">
-              {{ relayerServiceUrl }}
-            </div>
-            <div class="text-[11px] text-brand-500">
-              relayer-service 负责签名转发（builder creds 在服务端 .env）。\n            </div>
-          </div>
+          <button class="btn-primary w-full" @click="bulkWithdraw">
+            开始提现
+          </button>
         </div>
         <div class="rounded-2xl border border-brand-100 bg-brand-50 p-3">
           <div class="text-xs font-semibold text-brand-800">转入地址配置</div>
@@ -146,12 +133,20 @@
           </div>
           <div class="mt-3">
             <div v-if="transferMode === 'many-to-many'">
-              <p class="text-xs text-brand-700">多转多：每行一个转入地址，或 index,address。</p>
-              <textarea
-                v-model="withdrawImportText"
-                class="mt-3 h-40 w-full rounded-xl border border-brand-200 p-3 text-xs"
-                placeholder="0x...\n0x..."
-              ></textarea>
+              <p class="text-xs text-brand-700">多转多：与左侧列表一一对应，填写每行转入地址。</p>
+              <div class="mt-3 max-h-[360px] space-y-2 overflow-auto rounded-xl border border-brand-200 bg-white p-2">
+                <div v-for="(row, idx) in withdrawRows" :key="row.id" class="flex items-center gap-2 rounded-lg border border-brand-100 px-2 py-2">
+                  <div class="w-8 text-[10px] text-text-muted font-mono text-right">#{{ idx + 1 }}</div>
+                  <div class="flex-1 text-[10px] font-mono text-neon-green">
+                    {{ maskAddress(row.address) }}
+                  </div>
+                  <input
+                    v-model="row.withdrawAddress"
+                    class="w-56 rounded-md border border-brand-200 px-2 py-1 text-[11px] font-mono"
+                    placeholder="转入地址"
+                  />
+                </div>
+              </div>
             </div>
             <div v-else>
               <p class="text-xs text-brand-700">多转一：填写单一转入地址。</p>
@@ -163,7 +158,7 @@
             </div>
           </div>
           <div class="mt-4 flex items-center justify-end gap-2">
-            <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawAddresses">
+            <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white" @click="applyWithdrawConfig">
               应用配置
             </button>
           </div>
@@ -181,8 +176,6 @@ const portal = inject(PortalKey) as any;
 if (!portal) {
   throw new Error("Portal context missing");
 }
-
-const relayerServiceUrl = (import.meta as any).env?.VITE_RELAYER_SERVICE_URL || "未配置";
 
 const { state, actions, utils } = portal;
 const {
@@ -206,4 +199,14 @@ const {
   bulkWithdraw,
 } = actions;
 const { maskAddress, copyText } = utils;
+
+const applyWithdrawConfig = () => {
+  if (transferMode.value === "many-to-many") {
+    withdrawImportText.value = withdrawRows.value
+      .map((row, idx) => (row.withdrawAddress ? `${idx + 1},${row.withdrawAddress}` : ""))
+      .filter(Boolean)
+      .join("\n");
+  }
+  applyWithdrawAddresses();
+};
 </script>

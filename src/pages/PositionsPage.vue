@@ -23,8 +23,8 @@
       </div>
     </div>
     <div class="table-shell mt-3 max-h-[560px] overflow-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-brand-50 text-xs text-brand-500">
+      <table class="min-w-full text-[11px]">
+        <thead class="bg-brand-50 text-[9px] text-brand-500 uppercase font-bold tracking-wider">
           <tr>
             <th class="px-3 py-2 text-left">账户</th>
             <th class="px-3 py-2 text-left">市场</th>
@@ -38,23 +38,23 @@
         </thead>
         <tbody>
           <tr v-if="positions.length === 0" class="border-t border-brand-100">
-            <td colspan="8" class="px-3 py-6 text-center text-sm text-brand-500">
+            <td colspan="8" class="px-3 py-6 text-center text-[11px] text-brand-500">
               暂无数据，请点击“查询仓位”。
             </td>
           </tr>
           <template v-for="group in groupedPositions" :key="group.address">
             <tr class="border-t border-brand-100 bg-brand-50/60">
-              <td class="px-3 py-2 text-brand-700" colspan="8">
+              <td class="px-3 py-2 font-mono text-neon-green text-[10px]" colspan="8">
                 {{ maskAddress(group.address) }} · {{ group.items.length }} 个仓位
               </td>
             </tr>
             <tr v-for="pos in group.items" :key="pos.id" class="border-t border-brand-100">
-              <td class="px-3 py-2 text-brand-600">{{ maskAddress(pos.address) }}</td>
+              <td class="px-3 py-2 font-mono text-neon-green text-[10px]">{{ maskAddress(pos.address) }}</td>
               <td class="px-3 py-2">{{ pos.market }}</td>
-              <td class="px-3 py-2 text-xs text-brand-500">{{ pos.slug || "-" }}</td>
+              <td class="px-3 py-2 text-[10px] text-text-muted">{{ pos.slug || "-" }}</td>
               <td class="px-3 py-2">{{ pos.size }}</td>
               <td class="px-3 py-2">{{ pos.value ? pos.value.toFixed(2) : "-" }}</td>
-              <td class="px-3 py-2 text-xs text-brand-500">{{ pos.endDate || "-" }}</td>
+              <td class="px-3 py-2 text-[10px] text-text-muted">{{ pos.endDate || "-" }}</td>
               <td class="px-3 py-2">
                 <span
                   v-if="pos.value > 0"
