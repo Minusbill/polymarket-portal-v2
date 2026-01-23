@@ -1,5 +1,5 @@
 <template>
-  <div :class="['min-h-screen', darkMode ? 'theme-dark' : '']">
+  <div :class="['min-h-screen', darkMode ? 'theme-dark' : 'theme-light']">
     <div
       class="min-h-screen bg-bg-main text-text-main font-display flex flex-col overflow-x-hidden selection:bg-neon-green/20 selection:text-neon-green"
     >
@@ -43,9 +43,10 @@
           </button>
           <button
             class="size-8 flex items-center justify-center text-text-muted hover:text-text-main transition-colors"
+            :title="darkMode ? '切换浅色主题' : '切换深色主题'"
             @click="darkMode = !darkMode"
           >
-            <span class="material-symbols-outlined text-base">settings</span>
+            <span class="material-symbols-outlined text-base">{{ darkMode ? "light_mode" : "dark_mode" }}</span>
           </button>
         </div>
       </header>
@@ -260,7 +261,8 @@ const showPairs = ref(false);
 const showFlow = ref(false);
 const showIntro = ref(false);
 const useProxy = ref(true);
-const darkMode = ref(true);
+const themeStorageKey = "portalTheme";
+const darkMode = ref(false);
 const currentPage = ref<"wallets" | "single" | "positions" | "deposit" | "withdraw">("single");
 const singleDelayMin = ref(1);
 const singleDelayMax = ref(5);
@@ -770,6 +772,13 @@ const { execute, clearLogs } = useExecutionActions({
 });
 
 onMounted(() => {
+  const storedTheme = localStorage.getItem(themeStorageKey);
+  if (storedTheme === "dark") {
+    darkMode.value = true;
+  } else if (storedTheme === "light") {
+    darkMode.value = false;
+  }
+
   const stored = localStorage.getItem("walletVault");
   const keyBytes = getStoredVaultKey();
   if (stored && keyBytes) {
@@ -791,6 +800,10 @@ onMounted(() => {
   loadExchangePublicIp();
   setPolygonRpcList(polygonRpcOptions.value);
   setActivePolygonRpc(selectedPolygonRpc.value);
+});
+
+watch(darkMode, (value) => {
+  localStorage.setItem(themeStorageKey, value ? "dark" : "light");
 });
 
 watch(currentPage, (page, prev) => {

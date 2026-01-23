@@ -13,7 +13,7 @@ body {
 
 @layer utilities {
   .glass-panel {
-    @apply bg-panel-bg border border-panel-border shadow-md rounded-md;
+    @apply bg-panel-bg border border-panel-border shadow-sm rounded-md;
   }
 
   .input-dark {
@@ -37,7 +37,7 @@ body {
   }
 
   .btn-outline-neon {
-    @apply border border-neon-green/30 text-neon-green hover:bg-neon-green/10 transition-all;
+    @apply border border-neon-green/30 text-neon-green hover:bg-neon-green/5 transition-all;
   }
 
   .sidebar-btn {
@@ -50,7 +50,7 @@ body {
 }
 
 .panel {
-  @apply rounded-md border border-panel-border bg-panel-bg p-4 shadow-md;
+  @apply rounded-md border border-panel-border bg-panel-bg p-4 shadow-sm;
 }
 
 .table-shell {
@@ -99,6 +99,10 @@ table thead th {
   background-color: #050505;
   color: #ffffff;
   color-scheme: dark;
+}
+
+.theme-light {
+  color-scheme: light;
 }
 
 .theme-dark .bg-bg-main {
@@ -246,6 +250,10 @@ table thead th {
 .theme-dark .btn-outline-neon {
   color: #00ff94;
   border-color: rgba(0, 255, 148, 0.3);
+}
+
+.theme-dark .btn-outline-neon:hover {
+  background-color: rgba(0, 255, 148, 0.1);
 }
 
 .theme-dark .sidebar-btn {
