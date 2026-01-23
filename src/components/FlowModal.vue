@@ -5,7 +5,7 @@
         <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-emerald-200/40 blur-2xl"></div>
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-[10px] uppercase tracking-[0.26em] text-brand-500">How It Works</div>
+            <div class="text-[10px] uppercase tracking-[0.26em] text-brand-500">操作说明</div>
             <h2 class="font-display text-xl text-brand-900 md:text-2xl">操作说明</h2>
           </div>
           <button class="text-xs text-brand-500" @click="emit('close')">关闭</button>
@@ -14,7 +14,7 @@
       <div class="max-h-[calc(80vh-112px)] overflow-auto p-6">
         <div class="flex flex-col gap-3">
           <div v-for="(step, idx) in steps" :key="step.title" class="flex items-center gap-3">
-            <div class="w-20 text-center text-xs font-semibold text-brand-500">Step {{ idx + 1 }}</div>
+            <div class="w-20 text-center text-xs font-semibold text-brand-500">步骤 {{ idx + 1 }}</div>
             <div class="flex-1 rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 shadow-soft">
               <div class="flex flex-wrap items-center gap-2 text-xs text-brand-600">
                 <span class="font-semibold text-brand-700">{{ step.title }}</span>
