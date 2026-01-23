@@ -5,7 +5,7 @@
         <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-200/40 blur-2xl"></div>
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-xs uppercase tracking-[0.3em] text-brand-500">Onboarding</div>
+            <div class="text-xs uppercase tracking-[0.3em] text-brand-500">新手引导</div>
             <h2 class="font-display text-2xl text-brand-900 md:text-3xl">Polymarket 刷交互门户</h2>
             <p class="mt-2 text-sm text-brand-600">
               用于多账户联动、刷交易量与交互记录的工作台。

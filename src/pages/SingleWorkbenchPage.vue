@@ -1,230 +1,276 @@
 <template>
-  <section class="panel">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <h2 class="font-display text-lg">单刷工作台</h2>
-        <p class="text-xs text-brand-500">先加载市场，再选择钱包并设置随机间隔执行。</p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button class="btn-outline" @click="refreshSingleMarket">刷新</button>
-      </div>
-    </div>
-
-    <div class="mt-3 space-y-2">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="text-sm font-medium text-brand-800">钱包选择</div>
-        <div class="flex flex-wrap gap-2">
-          <input
-            v-model="singlePositionsSlugInput"
-            class="rounded-lg border border-brand-200 px-3 py-1 text-xs"
-            placeholder="按 slug 查询仓位"
-          />
-          <button class="btn-outline text-xs" @click="loadSinglePositionsBySlug" :disabled="singlePositionsLoading">
-            {{ singlePositionsLoading ? "查询中..." : "查询仓位" }}
-          </button>
-          <button class="btn-outline text-xs" @click="refreshSingleBalances" :disabled="balanceLoading">
-            {{ balanceLoading ? "查询中..." : "查询余额" }}
-          </button>
+  <div class="col-span-12 grid grid-cols-12 gap-2 h-full min-h-0 overflow-hidden">
+    <div class="col-span-12 xl:col-span-8 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 min-h-0">
+      <div class="glass-panel p-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-sm font-bold text-text-main flex items-center gap-2 uppercase tracking-wide">
+            <span class="text-neon-green material-symbols-outlined text-lg">terminal</span>
+            活跃工作台
+          </h2>
         </div>
+        <button
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-panel-border-light hover:bg-panel-border text-text-muted hover:text-text-main text-[10px] font-mono rounded border border-panel-border transition-colors"
+          @click="refreshSingleMarket"
+        >
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          刷新数据
+        </button>
       </div>
-      <div class="table-shell max-h-[520px] overflow-auto">
-        <table class="min-w-full text-sm">
-          <thead class="sticky top-0 bg-brand-50 text-xs text-brand-500">
-            <tr>
-              <th class="px-3 py-2 text-left">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" :checked="singleHeaderChecked" @change="toggleSingleHeader" />
-                  <span>选择</span>
-                </div>
-              </th>
-              <th class="px-3 py-2 text-left">#</th>
-              <th class="px-3 py-2 text-left">钱包地址</th>
-              <th class="px-3 py-2 text-left">桥接地址</th>
-              <th class="px-3 py-2 text-left">余额</th>
-              <th class="px-3 py-2 text-left">仓位数量</th>
-              <th class="px-3 py-2 text-left">仓位价值(U)</th>
-              <th class="px-3 py-2 text-left">Outcome(数量/价值)</th>
-              <th class="px-3 py-2 text-left">IP 配置</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(wallet, idx) in wallets" :key="wallet.id" class="border-t border-brand-100">
-              <td class="px-3 py-2">
-                <input type="checkbox" v-model="singleSelections[wallet.id]" />
-              </td>
-              <td class="px-3 py-2 text-xs text-brand-600">{{ wallet.index || String(idx + 1) }}</td>
-              <td class="px-3 py-2 text-brand-600">{{ maskAddress(wallet.address) }}</td>
-              <td class="px-3 py-2 text-brand-600">{{ wallet.proxyAddress ? maskAddress(wallet.proxyAddress) : "-" }}</td>
-              <td class="px-3 py-2">{{ wallet.balance === null ? "-" : wallet.balance.toFixed(2) }}</td>
-              <td class="px-3 py-2">
-                {{
-                  singlePositionsByWallet[wallet.id]
-                    ? singlePositionsByWallet[wallet.id].size.toFixed(4)
-                    : "-"
-                }}
-              </td>
-              <td class="px-3 py-2">
-                {{
-                  singlePositionsByWallet[wallet.id]
-                    ? singlePositionsByWallet[wallet.id].value.toFixed(2)
-                    : "-"
-                }}
-              </td>
-              <td class="px-3 py-2 text-xs text-brand-500">
-                {{ singlePositionsByWallet[wallet.id]?.outcomeDetail || "-" }}
-              </td>
-              <td class="px-3 py-2 text-xs text-brand-500">
-                <span>{{ wallet.ipName || "无" }}</span>
-                <span class="text-brand-300"> / </span>
-                <span class="text-[10px] text-brand-400">{{ wallet.ipEndpoint || "无" }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
-    <div class="mt-3 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-      <div class="space-y-4">
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
-          <div class="flex items-center justify-between">
-            <div class="text-xs text-brand-500">市场加载</div>
-            <div class="text-xs text-brand-500">手动刷新</div>
-          </div>
-          <div class="mt-3 flex gap-2">
+      <div class="glass-panel flex flex-col">
+        <div class="p-2 border-b border-panel-border flex items-center justify-between bg-panel-border-light">
+          <h3 class="font-bold text-text-light text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-text-muted text-sm">account_balance_wallet</span>
+            钱包选择
+          </h3>
+          <div class="flex items-center gap-2">
             <input
-              v-model="singleMarketInput"
-              placeholder="polymarket.com/event/... 或 slug"
-              class="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
+              v-model="singlePositionsSlugInput"
+              class="input-dark py-1 px-2 text-[10px] rounded w-40 font-mono"
+              placeholder="过滤钱包..."
             />
-            <button class="btn-primary" @click="loadSingleMarket">加载</button>
-          </div>
-          <div class="mt-3 flex flex-wrap gap-2">
-            <a
-              v-if="singleMarket?.slug"
-              class="rounded-full border border-brand-200 px-3 py-1 text-xs text-brand-600"
-              :href="`https://polymarket.com/event/${singleMarket.slug}`"
-              target="_blank"
-              rel="noreferrer"
-            >
-              进入市场
-            </a>
-          </div>
-        </div>
-
-        <div v-if="singleMarket" class="rounded-xl border border-brand-100 bg-white p-3 min-h-[140px]">
-          <div class="text-xs text-brand-500">市场信息</div>
-          <div class="mt-2 text-base font-medium">{{ singleMarket.title }}</div>
-          <div class="mt-1 text-xs text-brand-500">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
-          <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
-              <div class="text-xs text-brand-500">Yes 价格</div>
-              <div class="text-lg font-semibold text-brand-700">{{ singleMarket.yesPrice }}</div>
-            </div>
-            <div class="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
-              <div class="text-xs text-brand-500">No 价格</div>
-              <div class="text-lg font-semibold text-brand-700">{{ singleMarket.noPrice }}</div>
+            <div class="flex rounded border border-panel-border p-0.5" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
+              <button
+                class="px-2 py-0.5 hover:bg-panel-border-light text-text-muted hover:text-text-main text-[9px] font-bold rounded transition-colors uppercase disabled:opacity-50"
+                @click="loadSinglePositionsBySlug"
+                :disabled="singlePositionsLoading"
+              >
+                持仓
+              </button>
+              <button
+                class="px-2 py-0.5 hover:bg-panel-border-light text-text-muted hover:text-text-main text-[9px] font-bold rounded transition-colors uppercase disabled:opacity-50"
+                @click="refreshSingleBalances"
+                :disabled="balanceLoading"
+              >
+                余额
+              </button>
             </div>
           </div>
         </div>
-
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
-          <div class="flex items-center justify-between">
-            <div class="text-xs font-semibold text-brand-700">执行参数</div>
-            <button class="btn-primary px-3 py-1.5 text-xs" @click="executeSingle">执行确定</button>
-          </div>
-          <div class="mt-2 grid gap-3 text-sm">
-            <div>
-              <label class="text-xs text-brand-500">策略方向</label>
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-brand-700">
-                <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
-                  <input type="radio" value="YES" v-model="singleSide" />
-                  买 YES
-                </label>
-                <label class="flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2">
-                  <input type="radio" value="NO" v-model="singleSide" />
-                  买 NO
-                </label>
-              </div>
-            </div>
-            <div>
-              <label class="text-xs text-brand-500">随机间隔范围（秒）</label>
-              <div class="mt-2 flex items-center gap-2">
-                <input
-                  v-model.number="singleDelayMin"
-                  type="number"
-                  min="0"
-                  class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                  placeholder="最小"
-                />
-                <span class="text-xs text-brand-400">-</span>
-                <input
-                  v-model.number="singleDelayMax"
-                  type="number"
-                  min="0"
-                  class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                  placeholder="最大"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="text-xs text-brand-500">金额范围（USDC）</label>
-              <div class="mt-2 flex items-center gap-2">
-                <input
-                  v-model.number="singleAmountMin"
-                  type="number"
-                  min="0"
-                  class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                  placeholder="最小金额"
-                />
-                <span class="text-xs text-brand-400">-</span>
-                <input
-                  v-model.number="singleAmountMax"
-                  type="number"
-                  min="0"
-                  class="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                  placeholder="最大金额"
-                />
-              </div>
-            </div>
-            <div class="text-xs text-brand-500">每个钱包执行时将随机取间隔与金额。</div>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-[11px] whitespace-nowrap">
+            <thead class="bg-panel-border-light text-text-muted text-[9px] uppercase font-bold tracking-wider">
+              <tr>
+                <th class="px-3 py-2 w-8 border-b border-panel-border">
+                  <input
+                    type="checkbox"
+                    :checked="singleHeaderChecked"
+                    @change="toggleSingleHeader"
+                    class="rounded border-panel-border text-neon-green focus:ring-neon-green/20 focus:ring-offset-0"
+                    :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'"
+                  />
+                </th>
+                <th class="px-3 py-2 border-b border-panel-border">#</th>
+                <th class="px-3 py-2 border-b border-panel-border">钱包地址</th>
+                <th class="px-3 py-2 border-b border-panel-border">桥接地址</th>
+                <th class="px-3 py-2 border-b border-panel-border text-right">余额</th>
+                <th class="px-3 py-2 border-b border-panel-border text-right">持仓数</th>
+                <th class="px-3 py-2 border-b border-panel-border text-right">估值 (U)</th>
+                <th class="px-3 py-2 border-b border-panel-border text-center">结果</th>
+                <th class="px-3 py-2 border-b border-panel-border text-right">IP 配置</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-panel-border-light">
+              <tr v-for="(wallet, idx) in wallets" :key="wallet.id" class="hover:bg-panel-border-light transition-colors group">
+                <td class="px-3 py-2">
+                  <input
+                    type="checkbox"
+                    v-model="singleSelections[wallet.id]"
+                    class="rounded border-panel-border text-neon-green focus:ring-neon-green/20 focus:ring-offset-0"
+                    :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'"
+                  />
+                </td>
+                <td class="px-3 py-2 text-text-muted font-mono text-[10px]">{{ wallet.index || String(idx + 1) }}</td>
+                <td class="px-3 py-2 font-mono text-neon-green font-medium cursor-pointer text-[10px]">
+                  {{ maskAddress(wallet.address) }}
+                </td>
+                <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
+                  {{ wallet.proxyAddress ? maskAddress(wallet.proxyAddress) : "-" }}
+                </td>
+                <td class="px-3 py-2 text-right text-text-main font-mono">
+                  {{ wallet.balance === null ? "-" : wallet.balance.toFixed(2) }}
+                </td>
+                <td class="px-3 py-2 text-right text-text-muted font-mono">
+                  {{
+                    singlePositionsByWallet[wallet.id]
+                      ? singlePositionsByWallet[wallet.id].size.toFixed(4)
+                      : "-"
+                  }}
+                </td>
+                <td class="px-3 py-2 text-right text-neon-green font-mono font-bold">
+                  {{
+                    singlePositionsByWallet[wallet.id]
+                      ? singlePositionsByWallet[wallet.id].value.toFixed(2)
+                      : "-"
+                  }}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  <span
+                    v-if="singlePositionsByWallet[wallet.id]?.outcomeDetail"
+                    class="bg-neon-green/10 text-neon-green border border-neon-green/30 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono"
+                  >
+                    {{ singlePositionsByWallet[wallet.id].outcomeDetail }}
+                  </span>
+                  <span v-else class="text-text-light font-mono">-</span>
+                </td>
+                <td class="px-3 py-2 text-right text-text-light text-[9px] font-mono">
+                  {{ wallet.ipEndpoint || "无" }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="space-y-4">
-        <div class="rounded-xl border border-brand-100 bg-brand-50 p-3">
-          <div class="flex items-center justify-between">
-            <div class="text-xs text-brand-500">盘口深度</div>
-            <div class="text-xs text-brand-500">
-              {{ singleShowSellOnly ? "卖一合计" : "买一合计" }} {{ (singleShowSellOnly ? singleSumAsk : singleSumBid).toFixed(3) }}
+      <div class="glass-panel p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-text-light text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-neon-green text-sm">tune</span>
+            执行参数
+          </h3>
+          <button class="btn-neon px-4 py-1.5 rounded text-[11px] flex items-center gap-1.5 uppercase tracking-wide" @click="executeSingle">
+            批量执行 <span class="material-symbols-outlined text-sm">play_arrow</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">交易方向</label>
+            <div class="flex gap-2">
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="direction" type="radio" value="YES" v-model="singleSide" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
+                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-neon-green peer-checked:text-black peer-checked:border-neon-green' : 'bg-white peer-checked:bg-neon-green peer-checked:text-white peer-checked:border-neon-green'"
+                >
+                  买入 是
+                </div>
+              </label>
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="direction" type="radio" value="NO" v-model="singleSide" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
+                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger' : 'bg-white peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger'"
+                >
+                  买入 否
+                </div>
+              </label>
             </div>
           </div>
-          <div class="mt-2 flex items-center justify-between text-xs text-brand-500">
-            <span>{{ singleSumHint }}</span>
-            <label class="flex items-center gap-2">
-              <input type="checkbox" v-model="singleShowSellOnly" />
-              只显示卖单
+          <div>
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">随机延迟 (秒)</label>
+            <div class="flex items-center gap-2">
+              <input class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMin" />
+              <span class="text-text-muted font-bold">-</span>
+              <input class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMax" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">金额范围 (USDC)</label>
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
+                <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最小" type="number" v-model.number="singleAmountMin" />
+              </div>
+              <span class="text-text-muted font-bold">-</span>
+              <div class="relative flex-1">
+                <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
+                <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最大" type="number" v-model.number="singleAmountMax" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-span-12 xl:col-span-4 flex flex-col gap-2 min-h-0">
+      <div class="glass-panel p-3">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-text-light text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-text-main text-sm">download</span>
+            市场加载
+          </h3>
+          <button class="text-neon-green text-[9px] font-bold hover:text-neon-green-dark transition-colors uppercase tracking-wider" @click="refreshSingleMarket">
+            手动刷新
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <input
+            class="flex-1 input-dark rounded px-3 py-1.5 text-xs font-mono"
+            placeholder="polymarket.com/event/... 或 标识符"
+            type="text"
+            v-model="singleMarketInput"
+          />
+          <button
+            class="px-4 py-1.5 border border-panel-border text-text-main text-[10px] font-bold rounded shadow-sm transition-all uppercase tracking-wide"
+            :class="darkMode ? 'bg-[#1A1A1D] hover:bg-[#252529] hover:border-neon-green/50 text-white' : 'bg-panel-border-light hover:bg-brand-100 hover:border-neon-green/50'"
+            @click="loadSingleMarket"
+          >
+            加载
+          </button>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <a
+            v-if="singleMarket?.slug"
+            class="rounded-full border border-panel-border px-3 py-1 text-[10px] text-text-muted"
+            :href="`https://polymarket.com/event/${singleMarket.slug}`"
+            target="_blank"
+            rel="noreferrer"
+          >
+            进入市场
+          </a>
+        </div>
+      </div>
+
+      <div class="glass-panel p-3 flex-1 flex flex-col min-h-0">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-text-light text-[10px] uppercase tracking-widest">市场深度</h3>
+          <div class="flex items-center gap-3">
+            <span class="text-text-muted text-[10px]">
+              {{ singleShowSellOnly ? "卖一合计" : "买一合计" }}:
+              <span class="text-text-main font-mono font-bold">
+                {{ (singleShowSellOnly ? singleSumAsk : singleSumBid).toFixed(3) }}
+              </span>
+            </span>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input class="rounded border-panel-border text-neon-green focus:ring-neon-green/20 w-3 h-3" type="checkbox" v-model="singleShowSellOnly" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'" />
+              <span class="text-[9px] text-text-muted font-bold uppercase">仅显示卖单</span>
             </label>
           </div>
-          <div v-if="singleSumAlert" class="mt-2 text-xs" :class="singleSumAlert.tone">
-            {{ singleSumAlert.message }}
-          </div>
-          <div v-if="singleOrderBookStatus" class="mt-2 text-xs text-rose-700">
-            {{ singleOrderBookStatus }}
-          </div>
+        </div>
+        <div class="text-text-muted text-[10px] mb-2">{{ singleSumHint }}</div>
+        <div v-if="singleSumAlert" class="mb-2 text-xs" :class="singleSumAlert.tone">
+          {{ singleSumAlert.message }}
+        </div>
+        <div v-if="singleOrderBookStatus" class="mb-2 text-xs text-danger">
+          {{ singleOrderBookStatus }}
         </div>
 
-        <div v-if="singleMarket" class="space-y-3 min-h-[360px]">
-          <div class="rounded-xl border border-brand-100 bg-white p-3">
-            <div class="text-xs text-brand-500">YES</div>
+        <div v-if="singleMarket" class="flex-1 space-y-3 overflow-y-auto custom-scrollbar">
+          <div class="rounded-xl border border-panel-border bg-panel-border-light p-3">
+            <div class="text-[10px] text-text-muted uppercase tracking-wide">市场信息</div>
+            <div class="mt-2 text-sm font-medium text-text-main">{{ singleMarket.title }}</div>
+            <div class="mt-1 text-[10px] text-text-muted">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
+            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-lg border border-panel-border bg-panel-bg px-3 py-2">
+                <div class="text-[10px] text-text-muted">Yes 价格</div>
+                <div class="text-lg font-semibold text-text-main">{{ singleMarket.yesPrice }}</div>
+              </div>
+              <div class="rounded-lg border border-panel-border bg-panel-bg px-3 py-2">
+                <div class="text-[10px] text-text-muted">No 价格</div>
+                <div class="text-lg font-semibold text-text-main">{{ singleMarket.noPrice }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-panel-border bg-panel-bg p-3">
+            <div class="text-[10px] text-text-muted uppercase tracking-wide">YES</div>
             <div class="mt-2 space-y-3 text-sm">
               <div>
                 <div
                   v-for="(row, idx) in singleYesAsks"
                   :key="`single-yes-ask-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                  :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
+                  :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-text-main'"
                 >
                   <div
                     class="absolute inset-y-0 left-0"
@@ -232,10 +278,10 @@
                     :style="{ width: depthWidth(row.size, singleYesAsks) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleYesAsks.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ singleYesAsks.length - idx }}</span>
+                    <span :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ singleYesAsks.length - idx }}</span>
                     <span class="font-semibold">{{ row.price }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
                 </div>
               </div>
@@ -244,7 +290,7 @@
                   v-for="(row, idx) in singleYesBids"
                   :key="`single-yes-bid-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                  :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
+                  :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-text-main'"
                 >
                   <div
                     class="absolute inset-y-0 left-0"
@@ -252,25 +298,25 @@
                     :style="{ width: depthWidth(row.size, singleYesBids) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleYesBids.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ singleYesBids.length - idx }}</span>
+                    <span :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ singleYesBids.length - idx }}</span>
                     <span class="font-semibold">{{ row.price }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="rounded-2xl border border-brand-100 bg-white p-3">
-            <div class="text-xs text-brand-500">NO</div>
+          <div class="rounded-xl border border-panel-border bg-panel-bg p-3">
+            <div class="text-[10px] text-text-muted uppercase tracking-wide">NO</div>
             <div class="mt-2 space-y-3 text-sm">
               <div>
                 <div
                   v-for="(row, idx) in singleNoAsks"
                   :key="`single-no-ask-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                  :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-brand-700'"
+                  :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-text-main'"
                 >
                   <div
                     class="absolute inset-y-0 left-0"
@@ -278,10 +324,10 @@
                     :style="{ width: depthWidth(row.size, singleNoAsks) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleNoAsks.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-rose-200' : 'text-brand-600'">#{{ singleNoAsks.length - idx }}</span>
+                    <span :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ singleNoAsks.length - idx }}</span>
                     <span class="font-semibold">{{ row.price }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
                 </div>
               </div>
@@ -290,7 +336,7 @@
                   v-for="(row, idx) in singleNoBids"
                   :key="`single-no-bid-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
-                  :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-brand-700'"
+                  :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-text-main'"
                 >
                   <div
                     class="absolute inset-y-0 left-0"
@@ -298,35 +344,53 @@
                     :style="{ width: depthWidth(row.size, singleNoBids) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleNoBids.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-emerald-200' : 'text-brand-600'">#{{ singleNoBids.length - idx }}</span>
+                    <span :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ singleNoBids.length - idx }}</span>
                     <span class="font-semibold">{{ row.price }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">深度 {{ row.size }}</span>
-                    <span :class="darkMode ? 'text-slate-200' : 'text-brand-500'">价值 {{ formatU(row.price, row.size) }} U</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
+                    <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-else class="rounded-xl border border-dashed border-brand-200 p-4 text-sm text-brand-500 min-h-[360px] flex items-center justify-center">
-          请输入市场链接或 slug 后加载盘口。
-        </div>
-      </div>
-    </div>
 
-    <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
-      <div class="mb-2 flex items-center justify-between text-brand-500">
-        <span>执行输出</span>
-        <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearSingleLogs">清空</button>
+        <div v-else class="flex-1 rounded border border-panel-border flex items-center justify-center flex-col gap-3 relative overflow-hidden group" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-panel-border-light'">
+          <div
+            class="absolute inset-0 pointer-events-none"
+            :class="
+              darkMode
+                ? 'bg-[linear-gradient(rgba(30,30,30,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(30,30,30,0.5)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20'
+                : 'bg-[linear-gradient(rgba(200,200,200,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(200,200,200,0.2)_1px,transparent_1px)] bg-[size:20px_20px]'
+            "
+          ></div>
+          <div class="relative z-10 flex flex-col items-center">
+            <span class="material-symbols-outlined text-5xl transition-colors duration-500" :class="darkMode ? 'text-[#27272A] group-hover:text-neon-green/20' : 'text-brand-300 group-hover:text-neon-green/30'">
+              candlestick_chart
+            </span>
+            <p class="text-text-muted text-[10px] font-mono mt-2 uppercase tracking-wide text-center">输入市场 URL 加载数据</p>
+          </div>
+        </div>
       </div>
-      <div class="max-h-[120px] space-y-1 overflow-auto font-mono break-all whitespace-pre-wrap">
-        <div v-if="singleLogs.length === 0" class="text-brand-400">暂无输出。</div>
-        <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`">
-          [{{ log.ts }}] {{ log.message }}
+
+      <div class="glass-panel p-3 h-1/3 flex flex-col min-h-0" :class="darkMode ? 'bg-[#0A0A0C] border-neon-green/20' : 'bg-white border-neon-green/10'">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-neon-green text-[10px] uppercase tracking-widest flex items-center gap-1.5 shadow-neon">
+            <span class="material-symbols-outlined text-sm">terminal</span>
+            系统日志
+          </h3>
+          <button class="text-text-muted hover:text-text-main text-[9px] transition-colors font-bold uppercase" @click="clearSingleLogs">清除日志</button>
+        </div>
+        <div class="flex-1 rounded border-t border-panel-border pt-2 font-mono text-[10px] overflow-y-auto custom-scrollbar text-text-muted">
+          <div v-if="singleLogs.length === 0" class="text-text-light">暂无输出。</div>
+          <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`" class="flex gap-2">
+            <span class="text-text-light">[{{ log.ts }}]</span>
+            <span class="text-text-main">{{ log.message }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">

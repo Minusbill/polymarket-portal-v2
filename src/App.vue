@@ -1,58 +1,135 @@
 <template>
-  <div :class="['min-h-screen', darkMode ? 'theme-dark' : '']">
-    <div class="min-h-screen app-bg text-brand-900">
-      <header class="border-b border-brand-100 bg-white/80 backdrop-blur">
-        <div class="mx-auto flex max-w-[1680px] flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between md:px-10">
-          <div>
-            <p class="text-xs uppercase tracking-[0.28em] text-brand-500">Polymarket Portal</p>
-            <h1 class="font-display text-2xl tracking-tight md:text-3xl">多账户对刷交互门户</h1>
-            <p class="text-sm text-brand-600">钱包对为最小单位，操作完全由用户手动确认。</p>
+  <div :class="['min-h-screen', darkMode ? 'theme-dark' : 'theme-light']">
+    <div
+      class="min-h-screen bg-bg-main text-text-main font-display flex flex-col overflow-x-hidden selection:bg-neon-green/20 selection:text-neon-green"
+    >
+      <header class="sticky top-0 z-50 flex items-center justify-between border-b border-panel-border bg-bg-sidebar/90 backdrop-blur-md px-4 py-2">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <div class="size-6 text-neon-green flex items-center justify-center">
+              <span class="material-symbols-outlined text-2xl">terminal</span>
+            </div>
+            <div>
+              <h1 class="text-sm font-bold tracking-tight text-text-main leading-none uppercase">
+                POLYMARKET <span class="text-neon-green">专业版</span>
+              </h1>
+            </div>
           </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <button class="btn-primary" @click="openFlow">操作说明</button>
-            <button class="btn-outline" @click="darkMode = !darkMode">
-              {{ darkMode ? "日间模式" : "夜间模式" }}
-            </button>
+          <div class="hidden md:flex items-center gap-4 ml-6 pl-6 border-l border-panel-border">
+            <div class="flex flex-col">
+              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">网络延迟</span>
+              <span class="text-[10px] text-neon-green font-mono">24ms</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">Gas 价格</span>
+              <span class="text-[10px] text-text-main font-mono">12 Gwei</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">ETH 价格</span>
+              <span class="text-[10px] text-text-main font-mono">$2,240.50</span>
+            </div>
           </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="hidden lg:flex items-center gap-2 px-3 py-1 bg-panel-border-light rounded border border-panel-border mr-2">
+            <span class="size-2 rounded-full bg-neon-green animate-pulse"></span>
+            <span class="text-[10px] text-text-muted font-mono uppercase">系统运行正常</span>
+          </div>
+          <button
+            class="px-3 py-1.5 text-[10px] font-bold text-text-muted hover:text-text-main hover:bg-panel-border-light border border-panel-border rounded transition-colors flex items-center gap-1.5"
+            @click="openFlow"
+          >
+            <span class="material-symbols-outlined text-base">book</span> 文档
+          </button>
+          <button
+            class="size-8 flex items-center justify-center text-text-muted hover:text-text-main transition-colors"
+            :title="darkMode ? '切换浅色主题' : '切换深色主题'"
+            @click="darkMode = !darkMode"
+          >
+            <span class="material-symbols-outlined text-base">{{ darkMode ? "light_mode" : "dark_mode" }}</span>
+          </button>
         </div>
       </header>
 
-      <main class="mx-auto w-full max-w-[1680px] px-4 pb-10 pt-4 md:px-6">
-        <div class="grid gap-4 lg:grid-cols-[200px_1fr]">
-          <aside class="sticky top-4 h-fit rounded-2xl border border-brand-100 bg-white/90 p-3 shadow-card backdrop-blur">
-            <div class="text-xs text-brand-600">模块导航</div>
-            <div class="mt-3 space-y-2">
-                <button class="nav-button" :class="currentPage === 'wallets' ? 'is-active' : ''" @click="currentPage = 'wallets'">
-                钱包管理
-              </button>
-              <button class="nav-button" :class="currentPage === 'single' ? 'is-active' : ''" @click="currentPage = 'single'">
-                单刷工作台
-              </button>
-              <button class="nav-button" :class="currentPage === 'positions' ? 'is-active' : ''" @click="currentPage = 'positions'">
-                仓位管理
-              </button>
-                <button class="nav-button" :class="currentPage === 'deposit' ? 'is-active' : ''" @click="currentPage = 'deposit'">
-                充值
-              </button>
-                <button class="nav-button" :class="currentPage === 'withdraw' ? 'is-active' : ''" @click="currentPage = 'withdraw'">
-                提现
-              </button>
+      <div class="flex flex-1 w-full max-w-full">
+        <aside class="w-56 flex-shrink-0 border-r border-panel-border bg-bg-sidebar p-2 flex flex-col gap-1">
+          <div class="px-3 py-2 text-[10px] font-bold text-text-light uppercase tracking-widest mb-1 opacity-70">导航</div>
+          <button
+            class="sidebar-btn group"
+            :class="currentPage === 'wallets' ? 'active' : ''"
+            @click="currentPage = 'wallets'"
+          >
+            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">account_balance_wallet</span>
+            钱包管理
+          </button>
+          <button
+            class="sidebar-btn group"
+            :class="currentPage === 'single' ? 'active' : ''"
+            @click="currentPage = 'single'"
+          >
+            <span class="material-symbols-outlined text-lg">bolt</span>
+            工作台
+          </button>
+          <button
+            class="sidebar-btn group"
+            :class="currentPage === 'positions' ? 'active' : ''"
+            @click="currentPage = 'positions'"
+          >
+            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">candlestick_chart</span>
+            持仓管理
+          </button>
+          <button
+            class="sidebar-btn group"
+            :class="currentPage === 'deposit' ? 'active' : ''"
+            @click="currentPage = 'deposit'"
+          >
+            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">payments</span>
+            充值
+          </button>
+          <button
+            class="sidebar-btn group"
+            :class="currentPage === 'withdraw' ? 'active' : ''"
+            @click="currentPage = 'withdraw'"
+          >
+            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">output</span>
+            提现
+          </button>
+          <div class="mt-auto px-3 py-4 border-t border-panel-border">
+            <div class="flex items-center gap-3">
+              <div
+                class="size-8 rounded-full border flex items-center justify-center text-[10px] font-bold"
+                :class="
+                  darkMode
+                    ? 'bg-gradient-to-tr from-gray-800 to-gray-700 border-gray-600 text-white'
+                    : 'bg-gradient-to-tr from-gray-100 to-gray-200 border-gray-300 text-text-light'
+                "
+              >
+                PM
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xs font-medium text-text-main">交易员_01</span>
+                <span class="text-[10px] text-neon-green">专业版已激活</span>
+              </div>
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <section class="space-y-4">
-            <WalletsPage v-show="currentPage === 'wallets'" />
-
-            <SingleWorkbenchPage v-show="currentPage === 'single'" />
-
-            <PositionsPage v-show="currentPage === 'positions'" />
-
-            <DepositPage v-show="currentPage === 'deposit'" />
-
-            <WithdrawPage v-show="currentPage === 'withdraw'" />
-          </section>
-        </div>
-      </main>
+        <main class="flex-1 p-2 bg-bg-main grid grid-cols-12 gap-2 overflow-hidden h-[calc(100vh-50px)]">
+          <SingleWorkbenchPage v-show="currentPage === 'single'" />
+          <div v-show="currentPage === 'wallets'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
+            <WalletsPage />
+          </div>
+          <div v-show="currentPage === 'positions'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
+            <PositionsPage />
+          </div>
+          <div v-show="currentPage === 'deposit'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
+            <DepositPage />
+          </div>
+          <div v-show="currentPage === 'withdraw'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
+            <WithdrawPage />
+          </div>
+        </main>
+      </div>
     </div>
   </div>
 
@@ -184,6 +261,7 @@ const showPairs = ref(false);
 const showFlow = ref(false);
 const showIntro = ref(false);
 const useProxy = ref(true);
+const themeStorageKey = "portalTheme";
 const darkMode = ref(false);
 const currentPage = ref<"wallets" | "single" | "positions" | "deposit" | "withdraw">("single");
 const singleDelayMin = ref(1);
@@ -694,6 +772,13 @@ const { execute, clearLogs } = useExecutionActions({
 });
 
 onMounted(() => {
+  const storedTheme = localStorage.getItem(themeStorageKey);
+  if (storedTheme === "dark") {
+    darkMode.value = true;
+  } else if (storedTheme === "light") {
+    darkMode.value = false;
+  }
+
   const stored = localStorage.getItem("walletVault");
   const keyBytes = getStoredVaultKey();
   if (stored && keyBytes) {
@@ -715,6 +800,10 @@ onMounted(() => {
   loadExchangePublicIp();
   setPolygonRpcList(polygonRpcOptions.value);
   setActivePolygonRpc(selectedPolygonRpc.value);
+});
+
+watch(darkMode, (value) => {
+  localStorage.setItem(themeStorageKey, value ? "dark" : "light");
 });
 
 watch(currentPage, (page, prev) => {

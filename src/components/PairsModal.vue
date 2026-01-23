@@ -13,7 +13,7 @@
       <div class="mt-4 max-h-96 space-y-2 overflow-auto">
         <div v-for="(p, idx) in pairs" :key="p.id" class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm">
           <div class="flex items-center justify-between gap-3">
-            <div class="text-xs font-semibold text-brand-700">Pair {{ idx + 1 }}</div>
+            <div class="text-xs font-semibold text-brand-700">配对 {{ idx + 1 }}</div>
             <div class="text-xs text-brand-500">
               {{ nameForWallet(p.a) }} ｜ {{ nameForWallet(p.b) }}
             </div>
