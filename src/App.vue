@@ -15,20 +15,6 @@
               </h1>
             </div>
           </div>
-          <div class="hidden md:flex items-center gap-4 ml-6 pl-6 border-l border-panel-border">
-            <div class="flex flex-col">
-              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">网络延迟</span>
-              <span class="text-[10px] text-neon-green font-mono">24ms</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">Gas 价格</span>
-              <span class="text-[10px] text-text-main font-mono">12 Gwei</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-[9px] text-text-light uppercase tracking-wider font-mono">ETH 价格</span>
-              <span class="text-[10px] text-text-main font-mono">$2,240.50</span>
-            </div>
-          </div>
         </div>
         <div class="flex items-center gap-2">
           <div class="hidden lg:flex items-center gap-2 px-3 py-1 bg-panel-border-light rounded border border-panel-border mr-2">
