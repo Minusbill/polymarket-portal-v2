@@ -1,7 +1,7 @@
 <template>
   <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4" @click.self="emit('close')">
     <div class="w-full max-w-4xl overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-[0_28px_80px_rgba(7,20,60,0.35)]">
-      <div class="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.18),transparent_55%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.2),transparent_45%),linear-gradient(120deg,#f8fafc,#ecfdf5)] p-6">
+      <div class="intro-modal-hero relative overflow-hidden p-6">
         <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-emerald-200/40 blur-2xl"></div>
         <div class="flex items-center justify-between">
           <div>

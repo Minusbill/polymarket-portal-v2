@@ -119,67 +119,68 @@
     </div>
   </div>
 
-  <ImportModal
-    :open="showImport"
-    :import-text="importText"
-    @close="showImport = false"
-    @confirm="confirmImport"
-    @csv-import="handleCsvImport"
-    @update:importText="importText = $event"
-  />
+  <div :class="[darkMode ? 'theme-dark' : 'theme-light', 'contents']">
+    <ImportModal
+      :open="showImport"
+      :import-text="importText"
+      @close="showImport = false"
+      @confirm="confirmImport"
+      @csv-import="handleCsvImport"
+      @update:importText="importText = $event"
+    />
 
-  <FlowModal :open="showFlow" :steps="flowSteps" @close="showFlow = false" />
+    <FlowModal :open="showFlow" :steps="flowSteps" @close="showFlow = false" />
 
-  <IntroModal
-    :open="showIntro"
-    @close="showIntro = false"
-    @hide-today="hidePopupForToday('intro'); showIntro = false"
-  />
+    <IntroModal
+      :open="showIntro"
+      @close="showIntro = false"
+      @hide-today="hidePopupForToday('intro'); showIntro = false"
+    />
 
+    <WalletIpModal
+      :open="showWalletIpModal"
+      :address-label="walletIpTarget ? maskAddress(walletIpTarget.address) : '-'"
+      :ip-name="walletIpName"
+      :ip-endpoint="walletIpEndpoint"
+      :selected-preset="selectedIpPreset"
+      :ip-name-options="ipNameOptions"
+      :ip-config-options="ipConfigOptions"
+      @close="showWalletIpModal = false"
+      @save="saveWalletIp"
+      @apply-preset="applyIpPreset"
+      @update:ipName="walletIpName = $event"
+      @update:ipEndpoint="walletIpEndpoint = $event"
+      @update:selectedPreset="selectedIpPreset = $event"
+    />
 
-  <WalletIpModal
-    :open="showWalletIpModal"
-    :address-label="walletIpTarget ? maskAddress(walletIpTarget.address) : '-'"
-    :ip-name="walletIpName"
-    :ip-endpoint="walletIpEndpoint"
-    :selected-preset="selectedIpPreset"
-    :ip-name-options="ipNameOptions"
-    :ip-config-options="ipConfigOptions"
-    @close="showWalletIpModal = false"
-    @save="saveWalletIp"
-    @apply-preset="applyIpPreset"
-    @update:ipName="walletIpName = $event"
-    @update:ipEndpoint="walletIpEndpoint = $event"
-    @update:selectedPreset="selectedIpPreset = $event"
-  />
+    <PairConfigModal
+      :open="showPairConfig"
+      :amount="pairConfigAmount"
+      :label="pairConfigTarget ? `${pairConfigTarget.name}：${nameForWallet(pairConfigTarget.a)} / ${nameForWallet(pairConfigTarget.b)}` : '-'"
+      @close="showPairConfig = false"
+      @save="savePairConfig"
+      @update:amount="pairConfigAmount = Number.isFinite($event) ? $event : null"
+    />
 
-  <PairConfigModal
-    :open="showPairConfig"
-    :amount="pairConfigAmount"
-    :label="pairConfigTarget ? `${pairConfigTarget.name}：${nameForWallet(pairConfigTarget.a)} / ${nameForWallet(pairConfigTarget.b)}` : '-'"
-    @close="showPairConfig = false"
-    @save="savePairConfig"
-    @update:amount="pairConfigAmount = Number.isFinite($event) ? $event : null"
-  />
-
-  <div class="fixed bottom-4 right-4 z-50 space-y-2">
-    <div
-      v-for="toast in toasts"
-      :key="toast.id"
-      class="rounded-lg border px-3 py-2 text-xs shadow-soft"
-      :class="toast.tone === 'error' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-brand-200 bg-white text-brand-700'"
-    >
-      {{ toast.message }}
+    <div class="fixed bottom-4 right-4 z-50 space-y-2">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="rounded-lg border px-3 py-2 text-xs shadow-soft"
+        :class="toast.tone === 'error' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-brand-200 bg-white text-brand-700'"
+      >
+        {{ toast.message }}
+      </div>
     </div>
-  </div>
 
-  <PairsModal
-    :open="showPairs"
-    :pairs="pairs"
-    :name-for-wallet="nameForWallet"
-    @close="showPairs = false"
-    @select-all="selectAllPairs"
-  />
+    <PairsModal
+      :open="showPairs"
+      :pairs="pairs"
+      :name-for-wallet="nameForWallet"
+      @close="showPairs = false"
+      @select-all="selectAllPairs"
+    />
+  </div>
 
 </template>
 

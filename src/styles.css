@@ -89,6 +89,12 @@ body {
   text-shadow: 0 0 12px rgba(0, 214, 123, 0.35);
 }
 
+.intro-modal-hero {
+  background-image: radial-gradient(circle at top left, rgba(14, 116, 144, 0.18), transparent 55%),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.2), transparent 45%),
+    linear-gradient(120deg, #f8fafc, #ecfdf5);
+}
+
 table thead th {
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -216,6 +222,12 @@ table thead th {
 
 .theme-dark .glass-panel {
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+}
+
+.theme-dark .intro-modal-hero {
+  background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.18), transparent 55%),
+    radial-gradient(circle at top right, rgba(14, 116, 144, 0.2), transparent 45%),
+    linear-gradient(120deg, #0a0a0c, #111827);
 }
 
 .theme-dark .custom-scrollbar::-webkit-scrollbar-track {
