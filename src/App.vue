@@ -58,11 +58,11 @@
           </button>
           <button
             class="sidebar-btn group"
-            :class="currentPage === 'positions' ? 'active' : ''"
-            @click="currentPage = 'positions'"
+            :class="currentPage === 'wallet-positions' ? 'active' : ''"
+            @click="currentPage = 'wallet-positions'"
           >
-            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">candlestick_chart</span>
-            持仓管理
+            <span class="material-symbols-outlined text-lg group-hover:text-neon-green transition-colors">account_tree</span>
+            钱包仓位
           </button>
           <button
             class="sidebar-btn group"
@@ -105,8 +105,8 @@
           <div v-show="currentPage === 'wallets'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
             <WalletsPage />
           </div>
-          <div v-show="currentPage === 'positions'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
-            <PositionsPage />
+          <div v-show="currentPage === 'wallet-positions'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
+            <WalletPositionsPage />
           </div>
           <div v-show="currentPage === 'deposit'" class="col-span-12 h-full overflow-y-auto custom-scrollbar pr-1">
             <DepositPage />
@@ -225,6 +225,7 @@ import WalletIpModal from "./components/WalletIpModal.vue";
 import WalletsPage from "./pages/WalletsPage.vue";
 import SingleWorkbenchPage from "./pages/SingleWorkbenchPage.vue";
 import PositionsPage from "./pages/PositionsPage.vue";
+import WalletPositionsPage from "./pages/WalletPositionsPage.vue";
 import DepositPage from "./pages/DepositPage.vue";
 import WithdrawPage from "./pages/WithdrawPage.vue";
 
@@ -242,7 +243,7 @@ const showIntro = ref(false);
 const useProxy = ref(true);
 const themeStorageKey = "portalTheme";
 const darkMode = ref(false);
-const currentPage = ref<"wallets" | "single" | "positions" | "deposit" | "withdraw">("single");
+const currentPage = ref<"wallets" | "single" | "positions" | "wallet-positions" | "deposit" | "withdraw">("single");
 const singleDelayMin = ref(1);
 const singleDelayMax = ref(5);
 const singleAmountMin = ref<number | null>(null);
@@ -329,6 +330,7 @@ const exchangePublicIp = ref("");
 const exchangePublicIpLoading = ref(false);
 const depositStatus = ref("");
 const depositLogs = ref<LogEntry[]>([]);
+const positionsLogs = ref<LogEntry[]>([]);
 const withdrawStatus = ref("");
 const withdrawLogs = ref<LogEntry[]>([]);
 const ipNameOptions = computed(() => {
@@ -376,6 +378,9 @@ const logs = ref<LogEntry[]>([]);
 const pushLog = (message: string) => {
   logs.value.push({ ts: new Date().toLocaleTimeString(), message });
   if (logs.value.length > 60) logs.value.shift();
+};
+const clearPositionsLogs = () => {
+  positionsLogs.value = [];
 };
 
 const walletSearch = ref("");
@@ -669,6 +674,8 @@ const { loadPositions, loadSinglePositionsBySlug, clearPositions } = usePosition
   singlePositionsByWallet,
   parseSlug,
   fetchPositions,
+  positionLogs: positionsLogs,
+  maskAddress,
   pushToast,
 });
 
@@ -808,6 +815,7 @@ const portalContext = {
     singleNoBids,
     darkMode,
     singleLogs,
+    positionsLogs,
     positionsSlugInput,
     positionsLoading,
     positions,
@@ -856,6 +864,7 @@ const portalContext = {
     clearSingleLogs,
     loadPositions,
     clearPositions,
+    clearPositionsLogs,
     clearDepositLogs,
     refreshFundBalances,
     loadDepositBridgeAddresses,

@@ -1,5 +1,10 @@
 import type { Ref } from "vue";
-import type { PositionRow, Wallet } from "../types";
+import type { LogEntry, PositionRow, Wallet } from "../types";
+
+const pushPositionLog = (logs: Ref<LogEntry[]>, message: string) => {
+  logs.value.push({ ts: new Date().toLocaleTimeString(), message });
+  if (logs.value.length > 60) logs.value.shift();
+};
 
 const pushToastError = (pushToast: (message: string, tone?: "info" | "error") => void, message: string) => {
   pushToast(message, "error");
@@ -16,6 +21,8 @@ type Dependencies = {
   singlePositionsByWallet: Record<string, { size: number; value: number; outcomeDetail: string }>;
   parseSlug: (input: string) => string;
   fetchPositions: (address: string) => Promise<any[]>;
+  positionLogs: Ref<LogEntry[]>;
+  maskAddress: (value: string) => string;
   pushToast: (message: string, tone?: "info" | "error") => void;
 };
 
@@ -32,9 +39,11 @@ export const usePositionActions = (deps: Dependencies) => {
     }
     const slugFilter = deps.parseSlug(deps.positionsSlugInput.value).toLowerCase();
     deps.positionsLoading.value = true;
+    pushPositionLog(deps.positionLogs, `开始查询 ${targets.length} 个代理地址仓位...`);
     try {
       const results = await Promise.all(
         targets.map(async (wallet) => {
+          pushPositionLog(deps.positionLogs, `查询中：${deps.maskAddress(wallet.proxyAddress)}`);
           const list = await deps.fetchPositions(wallet.proxyAddress);
           const filtered = slugFilter
             ? list.filter((item: any) => {
@@ -70,10 +79,12 @@ export const usePositionActions = (deps: Dependencies) => {
         })
       );
       deps.positions.value = results.flat().filter((item): item is PositionRow => Boolean(item));
+      pushPositionLog(deps.positionLogs, "仓位查询完成。");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       pushToastError(deps.pushToast, `仓位查询失败：${message}`);
       deps.positions.value = [];
+      pushPositionLog(deps.positionLogs, `仓位查询失败：${message}`);
     } finally {
       deps.positionsLoading.value = false;
     }

@@ -61,7 +61,7 @@
                 </th>
                 <th class="px-3 py-2 border-b border-panel-border">#</th>
                 <th class="px-3 py-2 border-b border-panel-border">钱包地址</th>
-                <th class="px-3 py-2 border-b border-panel-border">桥接地址</th>
+                <th class="px-3 py-2 border-b border-panel-border">代理地址</th>
                 <th class="px-3 py-2 border-b border-panel-border text-right">余额</th>
                 <th class="px-3 py-2 border-b border-panel-border text-right">持仓数</th>
                 <th class="px-3 py-2 border-b border-panel-border text-right">估值 (U)</th>

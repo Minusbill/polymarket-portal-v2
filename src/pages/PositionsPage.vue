@@ -35,15 +35,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="positions.length === 0" class="border-t border-brand-100">
+          <tr v-if="displayGroups.length === 0" class="border-t border-brand-100">
             <td colspan="9" class="px-3 py-6 text-center text-[12px] text-brand-500">
               暂无数据，请点击“查询仓位”。
             </td>
           </tr>
-          <template v-for="group in groupedPositions" :key="group.address">
+          <template v-for="group in displayGroups" :key="group.address">
             <tr class="border-t border-brand-100 bg-brand-50/60">
               <td class="px-3 py-2 font-mono text-neon-green text-[12px]" colspan="9">
-                {{ maskAddress(group.address) }} · {{ group.items.length }} 个仓位
+                {{ maskAddress(group.address) }} · {{ group.items.length }}个仓位
               </td>
             </tr>
             <tr v-for="pos in group.items" :key="pos.id" class="border-t border-brand-100 cursor-pointer" @click="openPosition(pos)">
@@ -96,11 +96,11 @@
     <div class="mt-3 rounded-2xl border border-brand-100 bg-brand-50 p-3 text-xs text-brand-700 shadow-soft h-[160px]">
       <div class="mb-2 flex items-center justify-between text-brand-500">
         <span>执行输出</span>
-        <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearDepositLogs">清空</button>
+        <button class="text-xs text-brand-500 hover:text-brand-800" @click="clearPositionsLogs">清空</button>
       </div>
       <div class="max-h-[120px] space-y-1 overflow-auto font-mono break-all whitespace-pre-wrap">
-        <div v-if="depositLogs.length === 0" class="text-brand-400">暂无输出。</div>
-        <div v-for="(log, idx) in [...depositLogs].reverse()" :key="`${log.ts}-${idx}`">
+        <div v-if="positionsLogs.length === 0" class="text-brand-400">暂无输出。</div>
+        <div v-for="(log, idx) in [...positionsLogs].reverse()" :key="`${log.ts}-${idx}`">
           [{{ log.ts }}] {{ log.message }}
         </div>
       </div>
@@ -155,21 +155,21 @@
               {{ selectedPosition.redeemable ? "可操作：Claim" : selectedPosition.value > 0 ? "可操作：Sell" : "暂无可操作" }}
             </div>
             <div class="flex items-center gap-2">
-            <button
-              v-if="selectedPosition.redeemable"
-              class="rounded bg-blue-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-blue-500"
-            >
-              Claim
-            </button>
-            <button
-              v-else-if="selectedPosition.value > 0"
-              class="rounded bg-emerald-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-emerald-500"
-            >
-              Sell
-            </button>
-            <button class="rounded border border-brand-200 px-4 py-2 text-[12px] text-brand-700 hover:text-brand-900" @click="closePosition">
-              关闭
-            </button>
+              <button
+                v-if="selectedPosition.redeemable"
+                class="rounded bg-blue-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-blue-500"
+              >
+                Claim
+              </button>
+              <button
+                v-else-if="selectedPosition.value > 0"
+                class="rounded bg-emerald-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-emerald-500"
+              >
+                Sell
+              </button>
+              <button class="rounded border border-brand-200 px-4 py-2 text-[12px] text-brand-700 hover:text-brand-900" @click="closePosition">
+                关闭
+              </button>
             </div>
           </div>
         </div>
@@ -179,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { computed, inject, ref } from "vue";
 import { PortalKey } from "../context/portalContext";
 
 const portal = inject(PortalKey) as any;
@@ -188,12 +188,34 @@ if (!portal) {
 }
 
 const { state, actions, utils } = portal;
-const { positionsSlugInput, positionsLoading, positions, groupedPositions, depositLogs } = state;
-const { loadPositions, clearPositions, clearDepositLogs } = actions;
+const { wallets, positionsSlugInput, positionsLoading, positions, groupedPositions, positionsLogs } = state;
+const { loadPositions, clearPositions, clearPositionsLogs } = actions;
 const { maskAddress } = utils;
 
 const showPositionModal = ref(false);
 const selectedPosition = ref<any | null>(null);
+
+const displayGroups = computed(() => {
+  const baseGroups = Array.isArray(groupedPositions.value) ? groupedPositions.value : [];
+  const map = new Map<string, any[]>();
+  baseGroups.forEach((group: any) => {
+    map.set(group.address, group.items || []);
+  });
+  const groups: Array<{ address: string; items: any[] }> = [];
+  const walletList = Array.isArray(wallets?.value) ? wallets.value : [];
+  walletList.forEach((wallet: any) => {
+    const direct = map.get(wallet.address);
+    const proxy = wallet.proxyAddress ? map.get(wallet.proxyAddress) : undefined;
+    const items = direct || proxy || [];
+    groups.push({ address: wallet.address, items });
+    map.delete(wallet.address);
+    if (wallet.proxyAddress) map.delete(wallet.proxyAddress);
+  });
+  map.forEach((items, address) => {
+    groups.push({ address, items });
+  });
+  return groups;
+});
 
 const openPosition = (pos: any) => {
   selectedPosition.value = pos;
