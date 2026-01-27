@@ -17,14 +17,11 @@
         <button class="btn-outline" @click="clearPositions">
           清空
         </button>
-        <button class="btn-primary" @click="redeemAll" :disabled="positions.length === 0">
-          等待并 Redeem
-        </button>
       </div>
     </div>
     <div class="table-shell mt-3 max-h-[560px] overflow-auto">
-      <table class="min-w-full text-[11px]">
-        <thead class="bg-brand-50 text-[9px] text-brand-500 uppercase font-bold tracking-wider">
+      <table class="min-w-full text-[12px]">
+        <thead class="bg-brand-50 text-[10px] text-brand-500 uppercase font-bold tracking-wider">
           <tr>
             <th class="px-3 py-2 text-left">账户</th>
             <th class="px-3 py-2 text-left">市场</th>
@@ -39,18 +36,18 @@
         </thead>
         <tbody>
           <tr v-if="positions.length === 0" class="border-t border-brand-100">
-            <td colspan="9" class="px-3 py-6 text-center text-[11px] text-brand-500">
+            <td colspan="9" class="px-3 py-6 text-center text-[12px] text-brand-500">
               暂无数据，请点击“查询仓位”。
             </td>
           </tr>
           <template v-for="group in groupedPositions" :key="group.address">
             <tr class="border-t border-brand-100 bg-brand-50/60">
-              <td class="px-3 py-2 font-mono text-neon-green text-[10px]" colspan="9">
+              <td class="px-3 py-2 font-mono text-neon-green text-[12px]" colspan="9">
                 {{ maskAddress(group.address) }} · {{ group.items.length }} 个仓位
               </td>
             </tr>
-            <tr v-for="pos in group.items" :key="pos.id" class="border-t border-brand-100">
-              <td class="px-3 py-2 font-mono text-neon-green text-[10px]">{{ maskAddress(pos.address) }}</td>
+            <tr v-for="pos in group.items" :key="pos.id" class="border-t border-brand-100 cursor-pointer" @click="openPosition(pos)">
+              <td class="px-3 py-2 font-mono text-neon-green text-[12px]">{{ maskAddress(pos.address) }}</td>
               <td class="px-3 py-2">{{ pos.market }}</td>
               <td class="px-3 py-2 text-[10px] text-text-muted">{{ pos.slug || "-" }}</td>
               <td class="px-3 py-2">{{ pos.size }}</td>
@@ -78,12 +75,14 @@
                 <button
                   v-if="pos.redeemable"
                   class="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-blue-500"
+                  @click.stop
                 >
                   Claim
                 </button>
                 <button
                   v-else
                   class="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-emerald-500"
+                  @click.stop
                 >
                   Sell
                 </button>
@@ -106,11 +105,81 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showPositionModal && selectedPosition" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4" @click.self="closePosition">
+      <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-[0_28px_80px_rgba(7,20,60,0.35)]">
+        <div class="flex items-center justify-between border-b border-brand-100 bg-brand-50 px-5 py-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.26em] text-brand-500">仓位详情</div>
+            <h2 class="font-display text-lg text-brand-900">仓位详情</h2>
+          </div>
+          <button class="text-xs text-brand-500 hover:text-brand-800" @click="closePosition">关闭</button>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 text-sm">
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">账户</div>
+              <div class="mt-1 font-mono text-brand-800">{{ maskAddress(selectedPosition.address) }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">市场</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.market }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">Slug</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.slug || "-" }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">持仓</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.size }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">价值 (U)</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.value ? selectedPosition.value.toFixed(2) : "-" }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">结束时间</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.endDate || "-" }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">Redeem</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.redeemable ? "Yes" : "No" }}</div>
+            </div>
+            <div class="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+              <div class="text-[10px] text-brand-500 uppercase tracking-wider">状态</div>
+              <div class="mt-1 text-brand-800">{{ selectedPosition.status }}</div>
+            </div>
+          </div>
+          <div class="mt-5 flex items-center justify-between gap-2">
+            <div class="text-[11px] text-brand-600">
+              {{ selectedPosition.redeemable ? "可操作：Claim" : selectedPosition.value > 0 ? "可操作：Sell" : "暂无可操作" }}
+            </div>
+            <div class="flex items-center gap-2">
+            <button
+              v-if="selectedPosition.redeemable"
+              class="rounded bg-blue-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-blue-500"
+            >
+              Claim
+            </button>
+            <button
+              v-else-if="selectedPosition.value > 0"
+              class="rounded bg-emerald-600 px-4 py-2 text-[12px] font-semibold text-white hover:bg-emerald-500"
+            >
+              Sell
+            </button>
+            <button class="rounded border border-brand-200 px-4 py-2 text-[12px] text-brand-700 hover:text-brand-900" @click="closePosition">
+              关闭
+            </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { inject } from "vue";
+import { inject, ref } from "vue";
 import { PortalKey } from "../context/portalContext";
 
 const portal = inject(PortalKey) as any;
@@ -120,6 +189,19 @@ if (!portal) {
 
 const { state, actions, utils } = portal;
 const { positionsSlugInput, positionsLoading, positions, groupedPositions, depositLogs } = state;
-const { loadPositions, clearPositions, redeemAll, clearDepositLogs } = actions;
+const { loadPositions, clearPositions, clearDepositLogs } = actions;
 const { maskAddress } = utils;
+
+const showPositionModal = ref(false);
+const selectedPosition = ref<any | null>(null);
+
+const openPosition = (pos: any) => {
+  selectedPosition.value = pos;
+  showPositionModal.value = true;
+};
+
+const closePosition = () => {
+  showPositionModal.value = false;
+  selectedPosition.value = null;
+};
 </script>

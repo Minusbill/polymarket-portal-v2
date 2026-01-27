@@ -41,8 +41,8 @@
       </div>
 
       <div class="table-shell max-h-[720px] overflow-auto">
-        <table class="min-w-full text-[11px]">
-          <thead class="sticky top-0 bg-brand-50 text-[9px] text-brand-500 uppercase font-bold tracking-wider">
+        <table class="min-w-full text-[12px]">
+          <thead class="sticky top-0 bg-brand-50 text-[10px] text-brand-500 uppercase font-bold tracking-wider">
             <tr>
               <th class="px-3 py-2 text-left">
                 <div class="flex items-center gap-2">
@@ -71,12 +71,12 @@
                   placeholder="备注"
                 />
               </td>
-              <td class="px-3 py-2 font-mono text-neon-green font-medium text-[10px]">
+              <td class="px-3 py-2 font-mono text-neon-green font-medium text-[12px]">
                 <button class="text-left hover:text-neon-green-dark" @click="copyText(w.address)">
                   {{ maskAddress(w.address) }}
                 </button>
               </td>
-              <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
+              <td class="px-3 py-2 font-mono text-text-muted text-[12px]">
                 <button v-if="w.proxyAddress" class="text-left hover:text-text-main" @click="copyText(w.proxyAddress)">
                   {{ maskAddress(w.proxyAddress) }}
                 </button>

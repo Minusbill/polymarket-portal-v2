@@ -11,7 +11,7 @@
         <div class="flex items-center gap-2">
           <input
             v-model="singlePositionsSlugInput"
-            class="input-dark py-1.5 px-3 text-[10px] rounded w-48 font-mono"
+            class="input-dark py-1.5 px-3 text-[10px] rounded w-80 font-mono"
             placeholder="查询持仓：输入 slug"
           />
           <button
@@ -47,7 +47,7 @@
           <div class="flex items-center gap-2"></div>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-[11px] whitespace-nowrap">
+          <table class="w-full text-left text-[12px] whitespace-nowrap">
             <thead class="bg-panel-border-light text-text-muted text-[9px] uppercase font-bold tracking-wider">
               <tr>
                 <th class="px-3 py-2 w-8 border-b border-panel-border">
@@ -79,24 +79,24 @@
                     :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'"
                   />
                 </td>
-                <td class="px-3 py-2 text-text-muted font-mono text-[10px]">{{ wallet.index || String(idx + 1) }}</td>
-                <td class="px-3 py-2 font-mono text-neon-green font-medium cursor-pointer text-[10px]">
+                <td class="px-3 py-2 text-text-muted font-mono text-[11px]">{{ wallet.index || String(idx + 1) }}</td>
+                <td class="px-3 py-2 font-mono text-neon-green font-medium cursor-pointer text-[12px]">
                   {{ maskAddress(wallet.address) }}
                 </td>
-                <td class="px-3 py-2 font-mono text-text-muted text-[10px]">
+                <td class="px-3 py-2 font-mono text-text-muted text-[12px]">
                   {{ wallet.proxyAddress ? maskAddress(wallet.proxyAddress) : "-" }}
                 </td>
-                <td class="px-3 py-2 text-right text-text-main font-mono">
+                <td class="px-3 py-2 text-right text-text-main font-mono text-[12px]">
                   {{ wallet.balance === null ? "-" : wallet.balance.toFixed(2) }}
                 </td>
-                <td class="px-3 py-2 text-right text-text-muted font-mono">
+                <td class="px-3 py-2 text-right text-text-muted font-mono text-[12px]">
                   {{
                     singlePositionsByWallet[wallet.id]
                       ? singlePositionsByWallet[wallet.id].size.toFixed(4)
                       : "-"
                   }}
                 </td>
-                <td class="px-3 py-2 text-right text-neon-green font-mono font-bold">
+                <td class="px-3 py-2 text-right text-neon-green font-mono font-bold text-[12px]">
                   {{
                     singlePositionsByWallet[wallet.id]
                       ? singlePositionsByWallet[wallet.id].value.toFixed(2)
@@ -106,13 +106,13 @@
                 <td class="px-3 py-2 text-center">
                   <span
                     v-if="singlePositionsByWallet[wallet.id]?.outcomeDetail"
-                    class="bg-neon-green/10 text-neon-green border border-neon-green/30 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono"
+                    class="bg-neon-green/10 text-neon-green border border-neon-green/30 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono"
                   >
                     {{ singlePositionsByWallet[wallet.id].outcomeDetail }}
                   </span>
                   <span v-else class="text-text-light font-mono">-</span>
                 </td>
-                <td class="px-3 py-2 text-right text-text-light text-[9px] font-mono">
+                <td class="px-3 py-2 text-right text-text-light text-[10px] font-mono">
                   {{ wallet.ipEndpoint || "无" }}
                 </td>
               </tr>

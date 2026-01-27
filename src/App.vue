@@ -766,8 +766,6 @@ watch(currentPage, (page, prev) => {
   if (page === "single") resetSingleState();
 });
 
-const redeemAll = () => {};
-
 const portalContext = {
   state: {
     wallets,
@@ -858,7 +856,6 @@ const portalContext = {
     clearSingleLogs,
     loadPositions,
     clearPositions,
-    redeemAll,
     clearDepositLogs,
     refreshFundBalances,
     loadDepositBridgeAddresses,
