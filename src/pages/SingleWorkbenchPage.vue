@@ -131,7 +131,36 @@
             批量执行 <span class="material-symbols-outlined text-sm">play_arrow</span>
           </button>
         </div>
+        <div v-if="singleStrategy === 'limit'" class="mb-3 text-[10px] font-semibold text-danger">
+          挂单还在开发中，请稍等
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">执行方式</label>
+            <div class="flex items-center gap-2 rounded-full border border-panel-border p-1" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="strategy" type="radio" value="buy-yes" v-model="singleStrategy" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all"
+                  :class="darkMode ? 'text-text-muted peer-checked:bg-neon-green peer-checked:text-black' : 'text-text-muted peer-checked:bg-neon-green peer-checked:text-white'"
+                >
+                  市价买入
+                </div>
+              </label>
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="strategy" type="radio" value="limit" v-model="singleStrategy" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all"
+                  :class="darkMode ? 'text-text-muted peer-checked:bg-indigo-500 peer-checked:text-white' : 'text-text-muted peer-checked:bg-indigo-500 peer-checked:text-white'"
+                >
+                  挂单
+                </div>
+              </label>
+            </div>
+            <div class="mt-2 text-[10px] text-text-muted">
+              {{ singleStrategy === "limit" ? "限价挂单，按价格排队成交" : "市价撮合，立即成交" }}
+            </div>
+          </div>
           <div>
             <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">交易方向</label>
             <div class="flex gap-2">
@@ -141,7 +170,7 @@
                   class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
                   :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-neon-green peer-checked:text-black peer-checked:border-neon-green' : 'bg-white peer-checked:bg-neon-green peer-checked:text-white peer-checked:border-neon-green'"
                 >
-                  买入 是
+                  买入 YES
                 </div>
               </label>
               <label class="cursor-pointer flex-1">
@@ -150,9 +179,45 @@
                   class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
                   :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger' : 'bg-white peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger'"
                 >
-                  买入 否
+                  买入 NO
                 </div>
               </label>
+            </div>
+          </div>
+          <div v-if="singleStrategy === 'limit'">
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">挂单方向</label>
+            <div class="flex gap-2 mb-3">
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="limit-side" type="radio" value="YES" v-model="singleLimitSide" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
+                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-neon-green peer-checked:text-black peer-checked:border-neon-green' : 'bg-white peer-checked:bg-neon-green peer-checked:text-white peer-checked:border-neon-green'"
+                >
+                  YES
+                </div>
+              </label>
+              <label class="cursor-pointer flex-1">
+                <input class="peer sr-only" name="limit-side" type="radio" value="NO" v-model="singleLimitSide" />
+                <div
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
+                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger' : 'bg-white peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger'"
+                >
+                  NO
+                </div>
+              </label>
+            </div>
+            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">挂单价格</label>
+            <div class="flex items-center gap-2">
+              <input
+                class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs"
+                type="number"
+                min="0"
+                max="1"
+                step="0.001"
+                placeholder="如 0.52"
+                v-model.number="singleLimitPrice"
+              />
+              <span class="text-text-muted text-[10px] font-mono">USDC</span>
             </div>
           </div>
           <div>
@@ -265,24 +330,34 @@
             <div class="text-[10px] text-text-muted uppercase tracking-wide">市场信息</div>
             <div class="mt-2 text-sm font-medium text-text-main">{{ singleMarket.title }}</div>
             <div class="mt-1 text-[10px] text-text-muted">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
-            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div class="rounded-lg border border-panel-border bg-panel-bg px-3 py-2">
-                <div class="text-[10px] text-text-muted">Yes 价格</div>
-                <div class="text-lg font-semibold text-text-main">{{ singleMarket.yesPrice }}</div>
-              </div>
-              <div class="rounded-lg border border-panel-border bg-panel-bg px-3 py-2">
-                <div class="text-[10px] text-text-muted">No 价格</div>
-                <div class="text-lg font-semibold text-text-main">{{ singleMarket.noPrice }}</div>
+            <div class="mt-3">
+              <div class="flex items-center gap-2 rounded-full border border-panel-border p-1" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
+                <button
+                  class="flex-1 rounded-full px-3 py-1 text-center"
+                  :class="singleSide === 'YES' ? 'bg-neon-green text-white' : 'text-text-muted'"
+                  @click="singleSide = 'YES'"
+                >
+                  <div class="text-[9px] uppercase tracking-wider">YES 价格</div>
+                  <div class="text-[12px] font-semibold">{{ formatPrice(singleMarket.yesPrice) }}</div>
+                </button>
+                <button
+                  class="flex-1 rounded-full px-3 py-1 text-center"
+                  :class="singleSide === 'NO' ? 'bg-danger text-white' : 'text-text-muted'"
+                  @click="singleSide = 'NO'"
+                >
+                  <div class="text-[9px] uppercase tracking-wider">NO 价格</div>
+                  <div class="text-[12px] font-semibold">{{ formatPrice(singleMarket.noPrice) }}</div>
+                </button>
               </div>
             </div>
           </div>
 
-          <div class="rounded-xl border border-panel-border bg-panel-bg p-3">
+          <div v-if="singleSide === 'YES'" class="rounded-xl border border-panel-border bg-panel-bg p-3">
             <div class="text-[10px] text-text-muted uppercase tracking-wide">YES</div>
             <div class="mt-2 space-y-3 text-sm">
               <div>
                 <div
-                  v-for="(row, idx) in singleYesAsks"
+                  v-for="(row, idx) in [...singleYesAsks].reverse()"
                   :key="`single-yes-ask-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
                   :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-text-main'"
@@ -293,8 +368,15 @@
                     :style="{ width: depthWidth(row.size, singleYesAsks) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleYesAsks.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ singleYesAsks.length - idx }}</span>
-                    <span class="font-semibold">{{ row.price }}</span>
+                    <span
+                      v-if="idx === singleYesAsks.length - 1"
+                      class="mr-1 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest"
+                      :class="darkMode ? 'bg-rose-600/80 text-white' : 'bg-rose-500 text-white'"
+                    >
+                      Asks
+                    </span>
+                    <span v-else :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ idx + 1 }}</span>
+                    <span class="font-semibold">{{ formatPrice(row.price) }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
@@ -302,7 +384,7 @@
               </div>
               <div v-if="!singleShowSellOnly">
                 <div
-                  v-for="(row, idx) in singleYesBids"
+                  v-for="(row, idx) in [...singleYesBids].reverse()"
                   :key="`single-yes-bid-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
                   :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-text-main'"
@@ -313,8 +395,15 @@
                     :style="{ width: depthWidth(row.size, singleYesBids) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleYesBids.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ singleYesBids.length - idx }}</span>
-                    <span class="font-semibold">{{ row.price }}</span>
+                    <span
+                      v-if="idx === 0"
+                      class="mr-1 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest"
+                      :class="darkMode ? 'bg-emerald-600/80 text-white' : 'bg-emerald-500 text-white'"
+                    >
+                      Bids
+                    </span>
+                    <span v-else :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ idx + 1 }}</span>
+                    <span class="font-semibold">{{ formatPrice(row.price) }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
@@ -323,12 +412,12 @@
             </div>
           </div>
 
-          <div class="rounded-xl border border-panel-border bg-panel-bg p-3">
+          <div v-else class="rounded-xl border border-panel-border bg-panel-bg p-3">
             <div class="text-[10px] text-text-muted uppercase tracking-wide">NO</div>
             <div class="mt-2 space-y-3 text-sm">
               <div>
                 <div
-                  v-for="(row, idx) in singleNoAsks"
+                  v-for="(row, idx) in [...singleNoAsks].reverse()"
                   :key="`single-no-ask-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
                   :class="darkMode ? 'border-rose-900/60 bg-rose-950/40 text-slate-100' : 'border-rose-100 bg-rose-50/40 text-text-main'"
@@ -339,8 +428,15 @@
                     :style="{ width: depthWidth(row.size, singleNoAsks) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleNoAsks.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ singleNoAsks.length - idx }}</span>
-                    <span class="font-semibold">{{ row.price }}</span>
+                    <span
+                      v-if="idx === singleNoAsks.length - 1"
+                      class="mr-1 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest"
+                      :class="darkMode ? 'bg-rose-600/80 text-white' : 'bg-rose-500 text-white'"
+                    >
+                      Asks
+                    </span>
+                    <span v-else :class="darkMode ? 'text-rose-200' : 'text-text-muted'">#{{ idx + 1 }}</span>
+                    <span class="font-semibold">{{ formatPrice(row.price) }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
@@ -348,7 +444,7 @@
               </div>
               <div v-if="!singleShowSellOnly">
                 <div
-                  v-for="(row, idx) in singleNoBids"
+                  v-for="(row, idx) in [...singleNoBids].reverse()"
                   :key="`single-no-bid-${idx}`"
                   class="relative mt-1 overflow-hidden rounded-md border px-2 py-1 text-xs"
                   :class="darkMode ? 'border-emerald-900/60 bg-emerald-950/40 text-slate-100' : 'border-emerald-100 bg-emerald-50/40 text-text-main'"
@@ -359,8 +455,15 @@
                     :style="{ width: depthWidth(row.size, singleNoBids) }"
                   ></div>
                   <div class="relative flex items-center justify-between" :class="idx === singleNoBids.length - 1 ? 'text-sm font-semibold' : ''">
-                    <span :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ singleNoBids.length - idx }}</span>
-                    <span class="font-semibold">{{ row.price }}</span>
+                    <span
+                      v-if="idx === 0"
+                      class="mr-1 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest"
+                      :class="darkMode ? 'bg-emerald-600/80 text-white' : 'bg-emerald-500 text-white'"
+                    >
+                      Bids
+                    </span>
+                    <span v-else :class="darkMode ? 'text-emerald-200' : 'text-text-muted'">#{{ idx + 1 }}</span>
+                    <span class="font-semibold">{{ formatPrice(row.price) }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">深度 {{ row.size }}</span>
                     <span :class="darkMode ? 'text-slate-200' : 'text-text-muted'">价值 {{ formatU(row.price, row.size) }} U</span>
                   </div>
@@ -413,6 +516,9 @@ const {
   singleMarketInput,
   singleMarket,
   singleSide,
+  singleStrategy,
+  singleLimitSide,
+  singleLimitPrice,
   singleDelayMin,
   singleDelayMax,
   singleAmountMin,
@@ -440,4 +546,10 @@ const {
   clearSingleLogs,
 } = actions;
 const { maskAddress, formatU, depthWidth } = utils;
+
+const formatPrice = (price: number | string) => {
+  const value = Number(price);
+  if (!Number.isFinite(value)) return "-";
+  return (value * 100).toFixed(0);
+};
 </script>

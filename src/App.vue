@@ -248,6 +248,9 @@ const singleDelayMax = ref(5);
 const singleAmountMin = ref<number | null>(null);
 const singleAmountMax = ref<number | null>(null);
 const singleSide = ref<"YES" | "NO">("YES");
+const singleStrategy = ref<"buy-yes" | "buy-no" | "limit">("buy-yes");
+const singleLimitSide = ref<"YES" | "NO">("YES");
+const singleLimitPrice = ref<number | null>(null);
 const singleLogs = ref<LogEntry[]>([]);
 const singleSelections = reactive<Record<string, boolean>>({});
 
@@ -788,6 +791,9 @@ const portalContext = {
     singleMarketInput,
     singleMarket,
     singleSide,
+    singleStrategy,
+    singleLimitSide,
+    singleLimitPrice,
     singleDelayMin,
     singleDelayMax,
     singleAmountMin,

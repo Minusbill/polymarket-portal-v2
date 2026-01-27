@@ -34,17 +34,18 @@
             <th class="px-3 py-2 text-left">结束时间</th>
             <th class="px-3 py-2 text-left">Redeem 状态</th>
             <th class="px-3 py-2 text-left">状态</th>
+            <th class="px-3 py-2 text-left">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="positions.length === 0" class="border-t border-brand-100">
-            <td colspan="8" class="px-3 py-6 text-center text-[11px] text-brand-500">
+            <td colspan="9" class="px-3 py-6 text-center text-[11px] text-brand-500">
               暂无数据，请点击“查询仓位”。
             </td>
           </tr>
           <template v-for="group in groupedPositions" :key="group.address">
             <tr class="border-t border-brand-100 bg-brand-50/60">
-              <td class="px-3 py-2 font-mono text-neon-green text-[10px]" colspan="8">
+              <td class="px-3 py-2 font-mono text-neon-green text-[10px]" colspan="9">
                 {{ maskAddress(group.address) }} · {{ group.items.length }} 个仓位
               </td>
             </tr>
@@ -72,6 +73,20 @@
                 >
                   {{ pos.status }}
                 </span>
+              </td>
+              <td class="px-3 py-2">
+                <button
+                  v-if="pos.redeemable"
+                  class="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-blue-500"
+                >
+                  Claim
+                </button>
+                <button
+                  v-else
+                  class="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-emerald-500"
+                >
+                  Sell
+                </button>
               </td>
             </tr>
           </template>
