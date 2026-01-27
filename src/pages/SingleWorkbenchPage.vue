@@ -28,13 +28,6 @@
           >
             余额
           </button>
-          <button
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-panel-border-light hover:bg-panel-border text-text-muted hover:text-text-main text-[10px] font-mono rounded border border-panel-border transition-colors"
-            @click="refreshSingleMarket"
-          >
-            <span class="material-symbols-outlined text-sm">refresh</span>
-            刷新数据
-          </button>
         </div>
       </div>
 
@@ -127,22 +120,19 @@
             <span class="material-symbols-outlined text-neon-green text-sm">tune</span>
             执行参数
           </h3>
-          <button class="btn-neon px-4 py-1.5 rounded text-[11px] flex items-center gap-1.5 uppercase tracking-wide" @click="executeSingle">
-            批量执行 <span class="material-symbols-outlined text-sm">play_arrow</span>
-          </button>
         </div>
-        <div v-if="singleStrategy === 'limit'" class="mb-3 text-[10px] font-semibold text-danger">
+        <div v-if="singleStrategy === 'limit'" class="mb-3 text-[12px] font-semibold text-danger">
           挂单还在开发中，请稍等
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">执行方式</label>
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">执行方式</label>
             <div class="flex items-center gap-2 rounded-full border border-panel-border p-1" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
               <label class="cursor-pointer flex-1">
                 <input class="peer sr-only" name="strategy" type="radio" value="buy-yes" v-model="singleStrategy" />
                 <div
                   class="flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all"
-                  :class="darkMode ? 'text-text-muted peer-checked:bg-neon-green peer-checked:text-black' : 'text-text-muted peer-checked:bg-neon-green peer-checked:text-white'"
+                  :class="singleStrategy === 'buy-yes' ? (darkMode ? 'bg-neon-green text-black' : 'bg-neon-green text-white') : 'text-text-muted'"
                 >
                   市价买入
                 </div>
@@ -151,7 +141,7 @@
                 <input class="peer sr-only" name="strategy" type="radio" value="limit" v-model="singleStrategy" />
                 <div
                   class="flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all"
-                  :class="darkMode ? 'text-text-muted peer-checked:bg-indigo-500 peer-checked:text-white' : 'text-text-muted peer-checked:bg-indigo-500 peer-checked:text-white'"
+                  :class="singleStrategy === 'limit' ? (darkMode ? 'bg-indigo-500 text-black' : 'bg-indigo-500 text-white') : 'text-text-muted'"
                 >
                   挂单
                 </div>
@@ -162,13 +152,13 @@
             </div>
           </div>
           <div>
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">交易方向</label>
-            <div class="flex gap-2">
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">交易方向</label>
+            <div class="flex gap-2 mb-3">
               <label class="cursor-pointer flex-1">
                 <input class="peer sr-only" name="direction" type="radio" value="YES" v-model="singleSide" />
                 <div
-                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
-                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-neon-green peer-checked:text-black peer-checked:border-neon-green' : 'bg-white peer-checked:bg-neon-green peer-checked:text-white peer-checked:border-neon-green'"
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
+                  :class="singleSide === 'YES' ? (darkMode ? 'bg-neon-green text-black border-neon-green' : 'bg-neon-green text-white border-neon-green') : (darkMode ? 'bg-[#0A0A0C] text-text-muted' : 'bg-white text-text-muted')"
                 >
                   买入 YES
                 </div>
@@ -176,8 +166,8 @@
               <label class="cursor-pointer flex-1">
                 <input class="peer sr-only" name="direction" type="radio" value="NO" v-model="singleSide" />
                 <div
-                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
-                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger' : 'bg-white peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger'"
+                  class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
+                  :class="singleSide === 'NO' ? (darkMode ? 'bg-danger text-black border-danger' : 'bg-danger text-white border-danger') : (darkMode ? 'bg-[#0A0A0C] text-text-muted' : 'bg-white text-text-muted')"
                 >
                   买入 NO
                 </div>
@@ -185,13 +175,13 @@
             </div>
           </div>
           <div v-if="singleStrategy === 'limit'">
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">挂单方向</label>
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">挂单方向</label>
             <div class="flex gap-2 mb-3">
               <label class="cursor-pointer flex-1">
                 <input class="peer sr-only" name="limit-side" type="radio" value="YES" v-model="singleLimitSide" />
                 <div
                   class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-neon-green/50 transition-all text-[11px] font-bold uppercase"
-                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-neon-green peer-checked:text-black peer-checked:border-neon-green' : 'bg-white peer-checked:bg-neon-green peer-checked:text-white peer-checked:border-neon-green'"
+                  :class="singleLimitSide === 'YES' ? (darkMode ? 'bg-neon-green text-black border-neon-green' : 'bg-neon-green text-white border-neon-green') : (darkMode ? 'bg-[#0A0A0C]' : 'bg-white')"
                 >
                   YES
                 </div>
@@ -200,13 +190,13 @@
                 <input class="peer sr-only" name="limit-side" type="radio" value="NO" v-model="singleLimitSide" />
                 <div
                   class="flex items-center justify-center gap-1.5 py-2 rounded border border-panel-border text-text-muted hover:border-danger/50 transition-all text-[11px] font-bold uppercase"
-                  :class="darkMode ? 'bg-[#0A0A0C] peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger' : 'bg-white peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger'"
+                  :class="singleLimitSide === 'NO' ? (darkMode ? 'bg-danger text-black border-danger' : 'bg-danger text-white border-danger') : (darkMode ? 'bg-[#0A0A0C]' : 'bg-white')"
                 >
                   NO
                 </div>
               </label>
             </div>
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">挂单价格</label>
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">挂单价格</label>
             <div class="flex items-center gap-2">
               <input
                 class="flex-1 input-dark py-2 px-2 font-mono text-center rounded text-xs"
@@ -221,7 +211,7 @@
             </div>
           </div>
           <div>
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">随机延迟 (秒)</label>
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">随机延迟 (秒)</label>
             <div class="flex items-center gap-3">
               <input class="flex-1 min-w-0 input-dark py-2 px-2 font-mono text-center rounded text-xs" type="number" v-model.number="singleDelayMin" />
               <span class="text-text-muted font-bold">-</span>
@@ -229,18 +219,17 @@
             </div>
           </div>
           <div>
-            <label class="block text-text-muted text-[9px] font-bold uppercase tracking-wider mb-2">金额范围 (USDC)</label>
+            <label class="block text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2">金额范围 (USDC)</label>
             <div class="flex items-center gap-3">
-              <div class="relative flex-1 min-w-0">
-                <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
-                <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最小" type="number" v-model.number="singleAmountMin" />
-              </div>
+              <input class="flex-1 min-w-0 input-dark py-2 px-2 font-mono text-center rounded text-xs" placeholder="最小" type="number" v-model.number="singleAmountMin" />
               <span class="text-text-muted font-bold">-</span>
-              <div class="relative flex-1 min-w-0">
-                <span class="absolute left-2 top-2 text-text-muted text-[10px] font-mono">$</span>
-                <input class="w-full input-dark py-2 pl-5 pr-2 font-mono rounded text-xs" placeholder="最大" type="number" v-model.number="singleAmountMax" />
-              </div>
+              <input class="flex-1 min-w-0 input-dark py-2 px-2 font-mono text-center rounded text-xs" placeholder="最大" type="number" v-model.number="singleAmountMax" />
             </div>
+          </div>
+          <div class="flex items-end">
+            <button class="btn-neon w-full px-12 py-2 rounded text-[11px] flex items-center justify-center gap-1.5 uppercase tracking-wide whitespace-nowrap" @click="executeSingle">
+              开始执行 <span class="material-symbols-outlined text-sm">play_arrow</span>
+            </button>
           </div>
         </div>
       </div>
@@ -251,9 +240,9 @@
             <span class="material-symbols-outlined text-sm">terminal</span>
             执行输出
           </h3>
-          <button class="text-text-muted hover:text-text-main text-[9px] transition-colors font-bold uppercase" @click="clearSingleLogs">清除日志</button>
+          <button class="text-text-muted hover:text-text-main text-[11px] transition-colors font-bold uppercase" @click="clearSingleLogs">清除日志</button>
         </div>
-        <div class="flex-1 rounded border-t border-panel-border pt-2 font-mono text-[10px] overflow-y-auto custom-scrollbar text-text-muted">
+        <div class="flex-1 rounded border-t border-panel-border pt-2 font-mono text-[12px] overflow-y-auto custom-scrollbar text-text-muted">
           <div v-if="singleLogs.length === 0" class="text-text-light">暂无输出。</div>
           <div v-for="(log, idx) in [...singleLogs].reverse()" :key="`${log.ts}-${idx}`" class="flex gap-2">
             <span class="text-text-light">[{{ log.ts }}]</span>
@@ -303,9 +292,9 @@
 
       <div class="glass-panel p-3 flex-1 flex flex-col min-h-0">
         <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold text-text-light text-[10px] uppercase tracking-widest">市场深度</h3>
+          <h3 class="font-bold text-text-light text-[11px] uppercase tracking-widest">市场深度</h3>
           <div class="flex items-center gap-3">
-            <span class="text-text-muted text-[10px]">
+            <span class="text-text-muted text-[12px]">
               {{ singleShowSellOnly ? "卖一合计" : "买一合计" }}:
               <span class="text-text-main font-mono font-bold">
                 {{ (singleShowSellOnly ? singleSumAsk : singleSumBid).toFixed(3) }}
@@ -313,11 +302,11 @@
             </span>
             <label class="flex items-center gap-1.5 cursor-pointer select-none">
               <input class="rounded border-panel-border text-neon-green focus:ring-neon-green/20 w-3 h-3" type="checkbox" v-model="singleShowSellOnly" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'" />
-              <span class="text-[9px] text-text-muted font-bold uppercase">仅显示卖单</span>
+              <span class="text-[12px] text-text-muted font-bold uppercase">仅显示卖单</span>
             </label>
           </div>
         </div>
-        <div class="text-text-muted text-[10px] mb-2">{{ singleSumHint }}</div>
+        <div class="text-text-muted text-[11px] mb-2">{{ singleSumHint }}</div>
         <div v-if="singleSumAlert" class="mb-2 text-xs" :class="singleSumAlert.tone">
           {{ singleSumAlert.message }}
         </div>
@@ -327,25 +316,25 @@
 
         <div v-if="singleMarket" class="flex-1 space-y-3 overflow-y-auto custom-scrollbar">
           <div class="rounded-xl border border-panel-border bg-panel-border-light p-3">
-            <div class="text-[10px] text-text-muted uppercase tracking-wide">市场信息</div>
-            <div class="mt-2 text-sm font-medium text-text-main">{{ singleMarket.title }}</div>
-            <div class="mt-1 text-[10px] text-text-muted">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
+            <div class="text-[11px] text-text-muted uppercase tracking-wide">市场信息</div>
+            <div class="mt-2 text-[15px] font-medium text-text-main">{{ singleMarket.title }}</div>
+            <div class="mt-1 text-[11px] text-text-muted">状态：{{ singleMarket.status }} ｜ 更新时间：{{ singleMarket.updatedAt }}</div>
             <div class="mt-3">
               <div class="flex items-center gap-2 rounded-full border border-panel-border p-1" :class="darkMode ? 'bg-[#0A0A0C]' : 'bg-white'">
                 <button
                   class="flex-1 rounded-full px-3 py-1 text-center"
-                  :class="singleSide === 'YES' ? 'bg-neon-green text-white' : 'text-text-muted'"
+                  :class="singleSide === 'YES' ? (darkMode ? 'bg-neon-green text-black' : 'bg-neon-green text-white') : 'text-text-muted'"
                   @click="singleSide = 'YES'"
                 >
-                  <div class="text-[9px] uppercase tracking-wider">YES 价格</div>
+                  <div class="text-[11px] uppercase tracking-wider">YES 价格</div>
                   <div class="text-[12px] font-semibold">{{ formatPrice(singleMarket.yesPrice) }}</div>
                 </button>
                 <button
                   class="flex-1 rounded-full px-3 py-1 text-center"
-                  :class="singleSide === 'NO' ? 'bg-danger text-white' : 'text-text-muted'"
+                  :class="singleSide === 'NO' ? (darkMode ? 'bg-danger text-black' : 'bg-danger text-white') : 'text-text-muted'"
                   @click="singleSide = 'NO'"
                 >
-                  <div class="text-[9px] uppercase tracking-wider">NO 价格</div>
+                  <div class="text-[11px] uppercase tracking-wider">NO 价格</div>
                   <div class="text-[12px] font-semibold">{{ formatPrice(singleMarket.noPrice) }}</div>
                 </button>
               </div>

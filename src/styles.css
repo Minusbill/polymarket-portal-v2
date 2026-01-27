@@ -40,9 +40,9 @@ body {
     @apply border border-neon-green/30 text-neon-green hover:bg-neon-green/5 transition-all;
   }
 
-  .sidebar-btn {
-    @apply flex items-center gap-3 px-3 py-2 text-xs font-medium text-text-muted hover:text-text-main hover:bg-panel-border-light rounded transition-colors;
-  }
+.sidebar-btn {
+  @apply flex items-center gap-3 px-3 py-2 text-[13px] font-medium text-text-muted hover:text-text-main hover:bg-panel-border-light rounded transition-colors;
+}
 
   .sidebar-btn.active {
     @apply text-neon-green bg-panel-border-light border-l-2 border-neon-green;
@@ -70,7 +70,7 @@ body {
 }
 
 .nav-button {
-  @apply w-full rounded-lg border border-panel-border px-3 py-2 text-left text-sm font-medium text-text-muted transition;
+  @apply w-full rounded-lg border border-panel-border px-3 py-2 text-left text-[15px] font-medium text-text-muted transition;
 }
 
 .nav-button:hover {
@@ -243,8 +243,12 @@ table thead th {
 }
 
 .theme-dark .btn-neon {
-  color: #050505;
+  color: #050505 !important;
   box-shadow: 0 0 10px rgba(0, 255, 148, 0.2);
+}
+
+.theme-dark .btn-primary {
+  color: #050505 !important;
 }
 
 .theme-dark .btn-outline-neon {

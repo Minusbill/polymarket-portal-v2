@@ -6,6 +6,16 @@ const pushLog = (logs: Ref<LogEntry[]>, message: string) => {
   if (logs.value.length > 60) logs.value.shift();
 };
 
+const pickBestAsk = (rows: Array<{ price: number; size: number }>) => {
+  if (!rows || rows.length === 0) return null;
+  return rows.reduce((best, row) => (row.price < best.price ? row : best));
+};
+
+const pickBestBid = (rows: Array<{ price: number; size: number }>) => {
+  if (!rows || rows.length === 0) return null;
+  return rows.reduce((best, row) => (row.price > best.price ? row : best));
+};
+
 type Dependencies = {
   wallets: Wallet[];
   singleSelections: Record<string, boolean>;
@@ -26,11 +36,26 @@ type Dependencies = {
 };
 
 export const useSingleActions = (deps: Dependencies) => {
+  let pendingTimers: Array<ReturnType<typeof setTimeout>> = [];
+
+  const clearPendingTimers = () => {
+    pendingTimers.forEach((timer) => clearTimeout(timer));
+    pendingTimers = [];
+  };
+
+  const scheduleTimeout = (callback: () => void, delayMs: number) => {
+    const timer = (typeof window !== "undefined" ? window.setTimeout(callback, delayMs) : setTimeout(callback, delayMs)) as ReturnType<
+      typeof setTimeout
+    >;
+    pendingTimers.push(timer);
+  };
+
   const pushSingleLog = (message: string) => {
     pushLog(deps.singleLogs, message);
   };
 
   const resetSingleState = () => {
+    clearPendingTimers();
     deps.singleMarket.value = null;
     deps.singleMarketInput.value = "";
     deps.singleMarketTokenIds.value = { yes: null, no: null };
@@ -103,9 +128,24 @@ export const useSingleActions = (deps: Dependencies) => {
       pushSingleLog("随机金额上限不能小于下限。");
       return;
     }
+    clearPendingTimers();
+    const market = deps.singleMarket.value;
+    const yesAsk = pickBestAsk(market.book.yesAsks);
+    const yesBid = pickBestBid(market.book.yesBids);
+    const noAsk = pickBestAsk(market.book.noAsks);
+    const noBid = pickBestBid(market.book.noBids);
+    const formatLevel = (level: { price: number; size: number } | null) =>
+      level ? `${level.price.toFixed(3)} (${level.size.toFixed(2)})` : "-";
+    pushSingleLog(`市场: ${market.title} (${market.slug}) 状态 ${market.status} 更新时间 ${market.updatedAt}`);
+    pushSingleLog(
+      `盘口: YES 买一 ${formatLevel(yesBid)} / 卖一 ${formatLevel(yesAsk)} | NO 买一 ${formatLevel(noBid)} / 卖一 ${formatLevel(noAsk)}`
+    );
     pushSingleLog(
       `开始执行 ${selected.length} 个钱包，方向 ${deps.singleSide.value}，随机间隔 ${delayMin}-${delayMax}s。`
     );
+    let cumulativeMs = 0;
+    const activeAsk = deps.singleSide.value === "YES" ? yesAsk : noAsk;
+    const fallbackPrice = deps.singleSide.value === "YES" ? market.yesPrice : market.noPrice;
     selected.forEach((wallet, idx) => {
       const delay =
         delayMax > delayMin
@@ -118,14 +158,22 @@ export const useSingleActions = (deps: Dependencies) => {
                 Math.random() * (deps.singleAmountMax.value - deps.singleAmountMin.value)).toFixed(2)
             )
           : deps.singleAmountMin.value;
-      pushSingleLog(
-        `#${idx + 1} ${deps.maskAddress(wallet.address)} 买 ${deps.singleSide.value} 金额 ${amount} 间隔 ${delay}s 已提交`
-      );
+      const price = activeAsk?.price ?? fallbackPrice;
+      const priceLabel = activeAsk ? "卖一" : "参考价";
+      cumulativeMs += delay * 1000;
+      scheduleTimeout(() => {
+        pushSingleLog(
+          `#${idx + 1} ${deps.maskAddress(wallet.address)} 买 ${deps.singleSide.value} 金额 ${amount} 价格 ${price.toFixed(3)} (${priceLabel}) 间隔 ${delay}s 已提交`
+        );
+        if (idx === selected.length - 1) {
+          pushSingleLog("执行完成。");
+        }
+      }, cumulativeMs);
     });
-    pushSingleLog("执行完成。");
   };
 
   const clearSingleLogs = () => {
+    clearPendingTimers();
     deps.singleLogs.value = [];
   };
 
